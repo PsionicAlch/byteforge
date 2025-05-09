@@ -64,6 +64,7 @@ func (s *SyncSet[T]) Pop() (T, bool) {
 func (s *SyncSet[T]) Peek() (T, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.set.Peek()
 }
 
@@ -71,6 +72,7 @@ func (s *SyncSet[T]) Peek() (T, bool) {
 func (s *SyncSet[T]) Size() int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.set.Size()
 }
 
@@ -78,6 +80,7 @@ func (s *SyncSet[T]) Size() int {
 func (s *SyncSet[T]) IsEmpty() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+
 	return s.set.IsEmpty()
 }
 

@@ -1,589 +1,680 @@
 package set
 
 import (
-	"sort"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) {
-	// Test with no size parameter
-	s1 := New[int]()
-	assert.NotNil(t, s1)
-	assert.Equal(t, 0, s1.Size())
+func TestSet_New(t *testing.T) {
+	s := New[int]()
 
-	// Test with size parameter
-	s2 := New[int](10)
-	assert.NotNil(t, s2)
-	assert.Equal(t, 0, s2.Size())
-}
-
-func TestFromSlice(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    []int
-		expected int // expected size
-	}{
-		{"Empty slice", []int{}, 0},
-		{"Single element", []int{1}, 1},
-		{"Multiple elements", []int{1, 2, 3}, 3},
-		{"With duplicates", []int{1, 2, 3, 1, 2}, 3},
+	if s == nil {
+		t.Fatal("New() returned nil")
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := FromSlice(tc.input)
-			assert.Equal(t, tc.expected, s.Size())
+	if s.items == nil {
+		t.Fatal("New().items is nil")
+	}
 
-			// Check that all input elements are present
-			for _, item := range tc.input {
-				assert.True(t, s.Contains(item))
+	if len(s.items) != 0 {
+		t.Errorf("Expected empty set, got size %d", len(s.items))
+	}
+}
+
+func TestSet_FromSlice(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []int
+		want  []int
+	}{
+		{"empty slice", []int{}, []int{}},
+		{"slice with unique elements", []int{1, 2, 3}, []int{1, 2, 3}},
+		{"slice with duplicate elements", []int{1, 2, 2, 3, 1}, []int{1, 2, 3}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := FromSlice(tt.input)
+
+			if s.Size() != len(tt.want) {
+				t.Errorf("FromSlice(%v).Size() = %d, want %d", tt.input, s.Size(), len(tt.want))
+			}
+
+			for _, item := range tt.want {
+				if !s.Contains(item) {
+					t.Errorf("FromSlice(%v) does not contain %d", tt.input, item)
+				}
 			}
 		})
 	}
 }
 
-func TestContains(t *testing.T) {
-	s := New[int]()
-	s.Push(1, 2, 3)
+func TestSet_FromSyncSet(t *testing.T) {
+	t.Run("From non-empty SyncSet", func(t *testing.T) {
+		syncS := NewSync[int]()
+		syncS.Push(1, 2, 3)
 
-	assert.True(t, s.Contains(1))
-	assert.True(t, s.Contains(2))
-	assert.True(t, s.Contains(3))
-	assert.False(t, s.Contains(4))
+		s := FromSyncSet(syncS)
+		if s.Size() != 3 {
+			t.Errorf("Expected size 3, got %d", s.Size())
+		}
+		if !s.Contains(1) || !s.Contains(2) || !s.Contains(3) {
+			t.Error("Set does not contain expected elements")
+		}
+		// Ensure it's a clone
+		s.Push(4)
+		if syncS.set.Contains(4) {
+			t.Error("Original SyncSet's internal set was modified")
+		}
+	})
+
+	t.Run("From empty SyncSet", func(t *testing.T) {
+		syncS := NewSync[string]()
+		s := FromSyncSet(syncS)
+		if !s.IsEmpty() {
+			t.Error("Expected empty set from empty SyncSet")
+		}
+	})
 }
 
-func TestPush(t *testing.T) {
-	s := New[int]()
+func TestSet_Contains(t *testing.T) {
+	s := FromSlice([]string{"a", "b", "c"})
 
-	// Test adding a single item
-	s.Push(1)
-	assert.Equal(t, 1, s.Size())
-	assert.True(t, s.Contains(1))
-
-	// Test adding multiple items
-	s.Push(2, 3, 4)
-	assert.Equal(t, 4, s.Size())
-	assert.True(t, s.Contains(2))
-	assert.True(t, s.Contains(3))
-	assert.True(t, s.Contains(4))
-
-	// Test adding duplicates
-	s.Push(1, 2)
-	assert.Equal(t, 4, s.Size()) // Size shouldn't change
-	assert.True(t, s.Contains(1))
-	assert.True(t, s.Contains(2))
-}
-
-func TestPop(t *testing.T) {
-	s := New[int]()
-
-	// Test on empty set
-	item, ok := s.Pop()
-	assert.False(t, ok)
-	assert.Equal(t, 0, item) // Should return zero value
-
-	// Test with one element
-	s.Push(42)
-	item, ok = s.Pop()
-	assert.True(t, ok)
-	assert.Equal(t, 42, item)
-	assert.Equal(t, 0, s.Size())
-
-	// Test with multiple elements
-	s.Push(1, 2, 3)
-	valid := []int{1, 2, 3}
-	item, ok = s.Pop()
-	assert.True(t, ok)
-	assert.Contains(t, valid, item)
-	assert.Equal(t, 2, s.Size())
-}
-
-func TestPeek(t *testing.T) {
-	s := New[int]()
-
-	// Test on empty set
-	item, ok := s.Peek()
-	assert.False(t, ok)
-	assert.Equal(t, 0, item) // Should return zero value
-
-	// Test with elements
-	s.Push(1, 2, 3)
-	originalSize := s.Size()
-
-	item, ok = s.Peek()
-	assert.True(t, ok)
-	assert.Contains(t, []int{1, 2, 3}, item)
-	assert.Equal(t, originalSize, s.Size()) // Size should not change
-
-	// Verify all elements still there
-	assert.True(t, s.Contains(1))
-	assert.True(t, s.Contains(2))
-	assert.True(t, s.Contains(3))
-}
-
-func TestSize(t *testing.T) {
-	s := New[string]()
-	assert.Equal(t, 0, s.Size())
-
-	s.Push("a")
-	assert.Equal(t, 1, s.Size())
-
-	s.Push("b", "c")
-	assert.Equal(t, 3, s.Size())
-
-	s.Push("a") // Duplicate
-	assert.Equal(t, 3, s.Size())
-
-	s.Remove("a")
-	assert.Equal(t, 2, s.Size())
-
-	s.Clear()
-	assert.Equal(t, 0, s.Size())
-}
-
-func TestIsEmpty(t *testing.T) {
-	s := New[int]()
-	assert.True(t, s.IsEmpty())
-
-	s.Push(1)
-	assert.False(t, s.IsEmpty())
-
-	s.Remove(1)
-	assert.True(t, s.IsEmpty())
-
-	s.Push(1, 2)
-	s.Clear()
-	assert.True(t, s.IsEmpty())
-}
-
-func TestIter(t *testing.T) {
-	s := FromSlice([]int{1, 2, 3})
-
-	// Collect items from iterator
-	var items []int
-	for item := range s.Iter() {
-		items = append(items, item)
+	tests := []struct {
+		item string
+		want bool
+	}{
+		{"a", true},
+		{"d", false},
+		{"", false},
 	}
 
-	// Sort the items for deterministic comparison
-	sort.Ints(items)
-	assert.Equal(t, []int{1, 2, 3}, items)
-
-	// Test early termination
-	count := 0
-	for range s.Iter() {
-		count++
-		if count >= 2 {
-			break
+	for _, tt := range tests {
+		if got := s.Contains(tt.item); got != tt.want {
+			t.Errorf("s.Contains(%q) = %v, want %v", tt.item, got, tt.want)
 		}
 	}
-	assert.Equal(t, 2, count)
 
-	// Test empty set
 	emptySet := New[int]()
-	count = 0
-	for range emptySet.Iter() {
-		count++
+	if emptySet.Contains(1) {
+		t.Error("Empty set should not contain any element")
 	}
-	assert.Equal(t, 0, count)
 }
 
-func TestRemove(t *testing.T) {
+func TestSet_Push(t *testing.T) {
+	s := New[int]()
+	s.Push(1)
+
+	if !s.Contains(1) || s.Size() != 1 {
+		t.Errorf("Push(1) failed. Set: %v", s.ToSlice())
+	}
+
+	s.Push(2, 3)
+	if !s.Contains(2) || !s.Contains(3) || s.Size() != 3 {
+		t.Errorf("Push(2, 3) failed. Set: %v", s.ToSlice())
+	}
+
+	// Push existing items
+	s.Push(1, 2)
+	if s.Size() != 3 {
+		t.Errorf("Pushing existing items changed size. Set: %v, Size: %d", s.ToSlice(), s.Size())
+	}
+
+	s.Push() // Push no items
+	if s.Size() != 3 {
+		t.Errorf("Pushing no items changed size. Set: %v, Size: %d", s.ToSlice(), s.Size())
+	}
+}
+
+func TestSet_Pop(t *testing.T) {
+	t.Run("Pop from non-empty set", func(t *testing.T) {
+		s := FromSlice([]int{10, 20, 30})
+		initialSize := s.Size()
+
+		poppedItem, ok := s.Pop()
+		if !ok {
+			t.Fatal("Pop() returned ok=false for non-empty set")
+		}
+		if s.Size() != initialSize-1 {
+			t.Errorf("Size after Pop() = %d, want %d", s.Size(), initialSize-1)
+		}
+		if s.Contains(poppedItem) {
+			t.Errorf("Popped item %d still present in set", poppedItem)
+		}
+
+		// Pop all elements
+		_, _ = s.Pop()
+		_, _ = s.Pop()
+		if !s.IsEmpty() {
+			t.Error("Set should be empty after popping all elements")
+		}
+	})
+
+	t.Run("Pop from empty set", func(t *testing.T) {
+		s := New[string]()
+		item, ok := s.Pop()
+		if ok {
+			t.Error("Pop() returned ok=true for empty set")
+		}
+		var zeroString string
+		if item != zeroString {
+			t.Errorf("Pop() from empty set returned item %q, want zero value %q", item, zeroString)
+		}
+	})
+}
+
+func TestSet_Peek(t *testing.T) {
+	t.Run("Peek from non-empty set", func(t *testing.T) {
+		s := FromSlice([]int{10, 20, 30})
+		initialSize := s.Size()
+		initialSet := s.Clone()
+
+		peekedItem, ok := s.Peek()
+
+		if !ok {
+			t.Fatal("Peek() returned ok=false for non-empty set")
+		}
+
+		if s.Size() != initialSize {
+			t.Errorf("Size after Peek() = %d, want %d", s.Size(), initialSize)
+		}
+
+		// Should still be there
+		if !s.Contains(peekedItem) {
+			t.Errorf("Peeked item %d not found in set after peeking", peekedItem)
+		}
+
+		// Verify set content remains unchanged
+		if !s.Equals(initialSet) {
+			t.Errorf("Set content changed after Peek(). Initial: %v, Current: %v", initialSet.ToSlice(), s.ToSlice())
+		}
+	})
+
+	t.Run("Peek from empty set", func(t *testing.T) {
+		s := New[string]()
+		item, ok := s.Peek()
+
+		if ok {
+			t.Error("Peek() returned ok=true for empty set")
+		}
+
+		var zeroString string
+		if item != zeroString {
+			t.Errorf("Peek() from empty set returned item %q, want zero value %q", item, zeroString)
+		}
+	})
+}
+
+func TestSet_Size(t *testing.T) {
+	s := New[int]()
+
+	if s.Size() != 0 {
+		t.Errorf("New set size = %d, want 0", s.Size())
+	}
+
+	s.Push(1, 2)
+	if s.Size() != 2 {
+		t.Errorf("Set size after Push(1,2) = %d, want 2", s.Size())
+	}
+
+	s.Remove(1)
+	if s.Size() != 1 {
+		t.Errorf("Set size after Remove(1) = %d, want 1", s.Size())
+	}
+}
+
+func TestSet_IsEmpty(t *testing.T) {
+	s := New[int]()
+
+	if !s.IsEmpty() {
+		t.Error("New set IsEmpty() = false, want true")
+	}
+
+	s.Push(1)
+	if s.IsEmpty() {
+		t.Error("Set with 1 element IsEmpty() = true, want false")
+	}
+
+	s.Remove(1)
+	if !s.IsEmpty() {
+		t.Error("Set after removing last element IsEmpty() = false, want true")
+	}
+}
+
+func TestSet_Iter(t *testing.T) {
+	t.Run("Iterate over non-empty set", func(t *testing.T) {
+		inputItems := []string{"apple", "banana", "cherry"}
+		s := FromSlice(inputItems)
+		iteratedItems := make([]string, 0, s.Size())
+
+		for item := range s.Iter() {
+			iteratedItems = append(iteratedItems, item)
+		}
+
+		if !s.Equals(FromSlice(iteratedItems)) {
+			t.Errorf("Iter() did not yield all items. Got: %v, Want (any order): %v", iteratedItems, inputItems)
+		}
+	})
+
+	t.Run("Iterate over empty set", func(t *testing.T) {
+		s := New[int]()
+		count := 0
+
+		for range s.Iter() {
+			count++
+		}
+
+		if count != 0 {
+			t.Errorf("Iter() on empty set yielded %d items, want 0", count)
+		}
+	})
+
+	t.Run("Iterate with early exit", func(t *testing.T) {
+		s := FromSlice([]int{1, 2, 3, 4, 5})
+		count := 0
+
+		for item := range s.Iter() {
+			// just an example condition
+			if item > 0 {
+				count++
+			}
+
+			// Stop after 2 items
+			if count == 2 {
+				break
+			}
+		}
+
+		if count != 2 {
+			t.Errorf("Iter() with early exit: expected to process 2 items, got %d", count)
+		}
+	})
+}
+
+func TestSet_Remove(t *testing.T) {
 	s := FromSlice([]int{1, 2, 3})
 
-	// Test removing existing item
-	removed := s.Remove(2)
-	assert.True(t, removed)
-	assert.Equal(t, 2, s.Size())
-	assert.False(t, s.Contains(2))
+	if !s.Remove(2) {
+		t.Error("Remove(2) returned false, want true")
+	}
 
-	// Test removing non-existing item
-	removed = s.Remove(4)
-	assert.False(t, removed)
-	assert.Equal(t, 2, s.Size())
+	if s.Contains(2) {
+		t.Error("Set still contains 2 after Remove(2)")
+	}
 
-	// Test removing last item
+	if s.Size() != 2 {
+		t.Errorf("Size after Remove(2) = %d, want 2", s.Size())
+	}
+
+	// Remove non-existent item
+	if s.Remove(4) {
+		t.Error("Remove(4) returned true, want false")
+	}
+
+	if s.Size() != 2 {
+		t.Errorf("Size after Remove(4) = %d, want 2", s.Size())
+	}
+
 	s.Remove(1)
 	s.Remove(3)
-	assert.True(t, s.IsEmpty())
+
+	if !s.IsEmpty() {
+		t.Error("Set not empty after removing all items")
+	}
+
+	// Remove from empty set
+	if s.Remove(1) {
+		t.Error("Remove(1) from empty set returned true, want false")
+	}
 }
 
-func TestClear(t *testing.T) {
-	s := FromSlice([]int{1, 2, 3})
-	assert.Equal(t, 3, s.Size())
-
+func TestSet_Clear(t *testing.T) {
+	s := FromSlice([]int{1, 2, 3, 4, 5})
 	s.Clear()
-	assert.Equal(t, 0, s.Size())
-	assert.True(t, s.IsEmpty())
-	assert.False(t, s.Contains(1))
+
+	if !s.IsEmpty() {
+		t.Error("Set IsEmpty() = false after Clear(), want true")
+	}
+
+	if s.Size() != 0 {
+		t.Errorf("Set Size() = %d after Clear(), want 0", s.Size())
+	}
+
+	if s.Contains(1) {
+		t.Error("Set Contains(1) = true after Clear(), want false")
+	}
+
+	emptySet := New[string]()
+
+	// Clear an already empty set
+	emptySet.Clear()
+
+	if !emptySet.IsEmpty() {
+		t.Error("Empty set IsEmpty() = false after Clear(), want true")
+	}
 }
 
-func TestClone(t *testing.T) {
-	original := FromSlice([]int{1, 2, 3})
+func TestSet_Clone(t *testing.T) {
+	original := FromSlice([]string{"x", "y", "z"})
 	clone := original.Clone()
 
-	// Test cloned set has same elements
-	assert.Equal(t, original.Size(), clone.Size())
-	for i := 1; i <= 3; i++ {
-		assert.True(t, clone.Contains(i))
+	if !original.Equals(clone) {
+		t.Errorf("Clone() content mismatch. Original: %v, Clone: %v", original.ToSlice(), clone.ToSlice())
 	}
 
-	// Test independence of sets
-	original.Push(4)
-	assert.True(t, original.Contains(4))
-	assert.False(t, clone.Contains(4))
-
-	clone.Push(5)
-	assert.True(t, clone.Contains(5))
-	assert.False(t, original.Contains(5))
-}
-
-func TestUnion(t *testing.T) {
-	tests := []struct {
-		name     string
-		set1     []int
-		set2     []int
-		expected []int
-	}{
-		{"Empty sets", []int{}, []int{}, []int{}},
-		{"Empty and non-empty", []int{}, []int{1, 2}, []int{1, 2}},
-		{"Non-empty and empty", []int{1, 2}, []int{}, []int{1, 2}},
-		{"Disjoint sets", []int{1, 2}, []int{3, 4}, []int{1, 2, 3, 4}},
-		{"Overlapping sets", []int{1, 2, 3}, []int{2, 3, 4}, []int{1, 2, 3, 4}},
-		{"Identical sets", []int{1, 2, 3}, []int{1, 2, 3}, []int{1, 2, 3}},
+	if original.Size() != clone.Size() {
+		t.Errorf("Clone() size mismatch. Original: %d, Clone: %d", original.Size(), clone.Size())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s1 := FromSlice(tc.set1)
-			s2 := FromSlice(tc.set2)
-			result := s1.Union(s2)
+	// Modify clone and check original
+	clone.Push("a")
 
-			// Check size matches expected
-			assert.Equal(t, len(tc.expected), result.Size())
+	if original.Contains("a") {
+		t.Error("Original set modified when clone was changed (Push)")
+	}
 
-			// Check all expected elements are present
-			for _, item := range tc.expected {
-				assert.True(t, result.Contains(item))
-			}
+	if original.Size() == clone.Size() {
+		t.Error("Original set size changed when clone was changed (Push)")
+	}
 
-			// Original sets should be unchanged
-			for _, item := range tc.set1 {
-				assert.True(t, s1.Contains(item))
-			}
-			for _, item := range tc.set2 {
-				assert.True(t, s2.Contains(item))
-			}
-		})
+	clone.Remove("x")
+
+	if !original.Contains("x") {
+		t.Error("Original set modified when clone was changed (Remove)")
+	}
+
+	// Test cloning an empty set
+	emptyOriginal := New[int]()
+	emptyClone := emptyOriginal.Clone()
+
+	if !emptyClone.IsEmpty() {
+		t.Error("Clone of empty set is not empty")
+	}
+
+	emptyClone.Push(100)
+
+	if !emptyOriginal.IsEmpty() {
+		t.Error("Original empty set modified when its clone was changed")
 	}
 }
 
-func TestIntersection(t *testing.T) {
-	tests := []struct {
-		name     string
-		set1     []int
-		set2     []int
-		expected []int
-	}{
-		{"Empty sets", []int{}, []int{}, []int{}},
-		{"Empty and non-empty", []int{}, []int{1, 2}, []int{}},
-		{"Non-empty and empty", []int{1, 2}, []int{}, []int{}},
-		{"Disjoint sets", []int{1, 2}, []int{3, 4}, []int{}},
-		{"Overlapping sets", []int{1, 2, 3}, []int{2, 3, 4}, []int{2, 3}},
-		{"Identical sets", []int{1, 2, 3}, []int{1, 2, 3}, []int{1, 2, 3}},
-		{"First set smaller", []int{2, 3}, []int{1, 2, 3, 4}, []int{2, 3}},
-		{"Second set smaller", []int{1, 2, 3, 4}, []int{2, 3}, []int{2, 3}},
+func TestSet_Union(t *testing.T) {
+	s1 := FromSlice([]int{1, 2, 3})
+	s2 := FromSlice([]int{3, 4, 5})
+	expectedUnion := FromSlice([]int{1, 2, 3, 4, 5})
+	resultUnion := s1.Union(s2)
+
+	if !resultUnion.Equals(expectedUnion) {
+		t.Errorf("s1.Union(s2) = %v, want %v", resultUnion.ToSlice(), expectedUnion.ToSlice())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s1 := FromSlice(tc.set1)
-			s2 := FromSlice(tc.set2)
-			result := s1.Intersection(s2)
+	// Union with empty set
+	sEmpty := New[int]()
+	resultUnionEmpty := s1.Union(sEmpty)
 
-			// Check size matches expected
-			assert.Equal(t, len(tc.expected), result.Size())
+	if !resultUnionEmpty.Equals(s1) {
+		t.Errorf("s1.Union(empty) = %v, want %v", resultUnionEmpty.ToSlice(), s1.ToSlice())
+	}
 
-			// Check all expected elements are present
-			for _, item := range tc.expected {
-				assert.True(t, result.Contains(item))
-			}
+	resultEmptyUnionS1 := sEmpty.Union(s1)
 
-			// Check no unexpected elements are present
-			for i := range result.Iter() {
-				assert.Contains(t, tc.expected, i)
-			}
+	if !resultEmptyUnionS1.Equals(s1) {
+		t.Errorf("empty.Union(s1) = %v, want %v", resultEmptyUnionS1.ToSlice(), s1.ToSlice())
+	}
 
-			// Original sets should be unchanged
-			for _, item := range tc.set1 {
-				assert.True(t, s1.Contains(item))
-			}
-			for _, item := range tc.set2 {
-				assert.True(t, s2.Contains(item))
-			}
-		})
+	// Ensure original sets are not modified
+	if !s1.Equals(FromSlice([]int{1, 2, 3})) {
+		t.Error("Original set s1 modified by Union operation")
+	}
+
+	if !s2.Equals(FromSlice([]int{3, 4, 5})) {
+		t.Error("Original set s2 modified by Union operation")
 	}
 }
 
-func TestDifference(t *testing.T) {
-	tests := []struct {
-		name     string
-		set1     []int
-		set2     []int
-		expected []int
-	}{
-		{"Empty sets", []int{}, []int{}, []int{}},
-		{"Empty and non-empty", []int{}, []int{1, 2}, []int{}},
-		{"Non-empty and empty", []int{1, 2}, []int{}, []int{1, 2}},
-		{"Disjoint sets", []int{1, 2}, []int{3, 4}, []int{1, 2}},
-		{"Overlapping sets", []int{1, 2, 3}, []int{2, 3, 4}, []int{1}},
-		{"Identical sets", []int{1, 2, 3}, []int{1, 2, 3}, []int{}},
-		{"Subset", []int{1, 2}, []int{1, 2, 3}, []int{}},
-		{"Superset", []int{1, 2, 3}, []int{1, 2}, []int{3}},
+func TestSet_Intersection(t *testing.T) {
+	s1 := FromSlice([]int{1, 2, 3, 6})
+	s2 := FromSlice([]int{3, 4, 5, 6})
+	expectedIntersection := FromSlice([]int{3, 6})
+	resultIntersection := s1.Intersection(s2)
+
+	if !resultIntersection.Equals(expectedIntersection) {
+		t.Errorf("s1.Intersection(s2) = %v, want %v", resultIntersection.ToSlice(), expectedIntersection.ToSlice())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s1 := FromSlice(tc.set1)
-			s2 := FromSlice(tc.set2)
-			result := s1.Difference(s2)
+	// Intersection with no common elements
+	s3 := FromSlice([]int{7, 8})
+	expectedNoIntersection := New[int]()
+	resultNoIntersection := s1.Intersection(s3)
 
-			// Check size matches expected
-			assert.Equal(t, len(tc.expected), result.Size())
-
-			// Check all expected elements are present
-			for _, item := range tc.expected {
-				assert.True(t, result.Contains(item))
-			}
-
-			// Check no unexpected elements are present
-			for i := range result.Iter() {
-				assert.Contains(t, tc.expected, i)
-			}
-
-			// Original sets should be unchanged
-			for _, item := range tc.set1 {
-				assert.True(t, s1.Contains(item))
-			}
-			for _, item := range tc.set2 {
-				assert.True(t, s2.Contains(item))
-			}
-		})
-	}
-}
-
-func TestSymmetricDifference(t *testing.T) {
-	tests := []struct {
-		name     string
-		set1     []int
-		set2     []int
-		expected []int
-	}{
-		{"Empty sets", []int{}, []int{}, []int{}},
-		{"Empty and non-empty", []int{}, []int{1, 2}, []int{1, 2}},
-		{"Non-empty and empty", []int{1, 2}, []int{}, []int{1, 2}},
-		{"Disjoint sets", []int{1, 2}, []int{3, 4}, []int{1, 2, 3, 4}},
-		{"Overlapping sets", []int{1, 2, 3}, []int{2, 3, 4}, []int{1, 4}},
-		{"Identical sets", []int{1, 2, 3}, []int{1, 2, 3}, []int{}},
+	if !resultNoIntersection.Equals(expectedNoIntersection) {
+		t.Errorf("s1.Intersection(s3) = %v, want %v (empty set)", resultNoIntersection.ToSlice(), expectedNoIntersection.ToSlice())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s1 := FromSlice(tc.set1)
-			s2 := FromSlice(tc.set2)
-			result := s1.SymmetricDifference(s2)
+	// Intersection with empty set
+	sEmpty := New[int]()
+	resultIntersectionEmpty := s1.Intersection(sEmpty)
 
-			// Check size matches expected
-			assert.Equal(t, len(tc.expected), result.Size())
+	if !resultIntersectionEmpty.Equals(sEmpty) {
+		t.Errorf("s1.Intersection(empty) = %v, want %v (empty set)", resultIntersectionEmpty.ToSlice(), sEmpty.ToSlice())
+	}
 
-			// Check all expected elements are present
-			for _, item := range tc.expected {
-				assert.True(t, result.Contains(item))
-			}
+	// Test optimization: s1 smaller than s2
+	sSmall := FromSlice([]int{3})
+	sLarge := FromSlice([]int{1, 2, 3, 4, 5})
+	expectedSmallLarge := FromSlice([]int{3})
+	resultSmallLarge := sSmall.Intersection(sLarge)
 
-			// Check no unexpected elements are present
-			for i := range result.Iter() {
-				assert.Contains(t, tc.expected, i)
-			}
+	if !resultSmallLarge.Equals(expectedSmallLarge) {
+		t.Errorf("sSmall.Intersection(sLarge) = %v, want %v", resultSmallLarge.ToSlice(), expectedSmallLarge.ToSlice())
+	}
 
-			// Original sets should be unchanged
-			for _, item := range tc.set1 {
-				assert.True(t, s1.Contains(item))
-			}
-			for _, item := range tc.set2 {
-				assert.True(t, s2.Contains(item))
-			}
-		})
+	// Test the other way too
+	resultLargeSmall := sLarge.Intersection(sSmall)
+
+	if !resultLargeSmall.Equals(expectedSmallLarge) {
+		t.Errorf("sLarge.Intersection(sSmall) = %v, want %v", resultLargeSmall.ToSlice(), expectedSmallLarge.ToSlice())
+	}
+
+	// Ensure original sets are not modified
+	if !s1.Equals(FromSlice([]int{1, 2, 3, 6})) {
+		t.Error("Original set s1 modified by Intersection operation")
+	}
+
+	if !s2.Equals(FromSlice([]int{3, 4, 5, 6})) {
+		t.Error("Original set s2 modified by Intersection operation")
 	}
 }
 
-func TestIsSubsetOf(t *testing.T) {
-	tests := []struct {
-		name     string
-		set1     []int
-		set2     []int
-		expected bool
-	}{
-		{"Empty is subset of empty", []int{}, []int{}, true},
-		{"Empty is subset of non-empty", []int{}, []int{1, 2}, true},
-		{"Non-empty is not subset of empty", []int{1, 2}, []int{}, false},
-		{"Subset", []int{1, 2}, []int{1, 2, 3}, true},
-		{"Not a subset", []int{1, 2, 4}, []int{1, 2, 3}, false},
-		{"Equal sets", []int{1, 2, 3}, []int{1, 2, 3}, true},
-		{"Disjoint sets", []int{1, 2}, []int{3, 4}, false},
+func TestSet_Difference(t *testing.T) {
+	s1 := FromSlice([]int{1, 2, 3, 4})
+	s2 := FromSlice([]int{3, 4, 5, 6})
+
+	// s1 - s2
+	expectedDifference := FromSlice([]int{1, 2})
+	resultDifference := s1.Difference(s2)
+
+	if !resultDifference.Equals(expectedDifference) {
+		t.Errorf("s1.Difference(s2) = %v, want %v", resultDifference.ToSlice(), expectedDifference.ToSlice())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s1 := FromSlice(tc.set1)
-			s2 := FromSlice(tc.set2)
-			result := s1.IsSubsetOf(s2)
-			assert.Equal(t, tc.expected, result)
-		})
-	}
-}
+	// s2 - s1
+	expectedDifference2 := FromSlice([]int{5, 6})
+	resultDifference2 := s2.Difference(s1)
 
-func TestEquals(t *testing.T) {
-	tests := []struct {
-		name     string
-		set1     []int
-		set2     []int
-		expected bool
-	}{
-		{"Empty equals empty", []int{}, []int{}, true},
-		{"Empty does not equal non-empty", []int{}, []int{1, 2}, false},
-		{"Non-empty does not equal empty", []int{1, 2}, []int{}, false},
-		{"Equal sets", []int{1, 2, 3}, []int{1, 2, 3}, true},
-		{"Equal sets, different order", []int{1, 2, 3}, []int{3, 1, 2}, true},
-		{"Subset is not equal", []int{1, 2}, []int{1, 2, 3}, false},
-		{"Superset is not equal", []int{1, 2, 3}, []int{1, 2}, false},
-		{"Different sets same size", []int{1, 2, 3}, []int{1, 2, 4}, false},
+	if !resultDifference2.Equals(expectedDifference2) {
+		t.Errorf("s2.Difference(s1) = %v, want %v", resultDifference2.ToSlice(), expectedDifference2.ToSlice())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s1 := FromSlice(tc.set1)
-			s2 := FromSlice(tc.set2)
-			result := s1.Equals(s2)
-			assert.Equal(t, tc.expected, result)
-		})
-	}
-}
+	// Difference with empty set
+	sEmpty := New[int]()
+	resultDiffEmpty := s1.Difference(sEmpty)
 
-func TestToSlice(t *testing.T) {
-	tests := []struct {
-		name      string
-		elements  []int
-		sliceSize int
-	}{
-		{"Empty set", []int{}, 0},
-		{"Single element", []int{1}, 1},
-		{"Multiple elements", []int{1, 2, 3}, 3},
-		{"With duplicates", []int{1, 2, 3, 1, 2}, 3},
+	if !resultDiffEmpty.Equals(s1) {
+		t.Errorf("s1.Difference(empty) = %v, want %v", resultDiffEmpty.ToSlice(), s1.ToSlice())
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := FromSlice(tc.elements)
-			slice := s.ToSlice()
+	resultEmptyDiffS1 := sEmpty.Difference(s1)
 
-			// Check slice length
-			assert.Equal(t, tc.sliceSize, len(slice))
+	if !resultEmptyDiffS1.IsEmpty() {
+		t.Errorf("empty.Difference(s1) = %v, want empty set", resultEmptyDiffS1.ToSlice())
+	}
 
-			// Check all set elements are in slice
-			for _, item := range slice {
-				assert.True(t, s.Contains(item))
-			}
+	// Difference with no common elements
+	s3 := FromSlice([]int{10, 11})
+	resultDiffNoCommon := s1.Difference(s3)
 
-			// Check all unique elements from input are in slice
-			uniqueMap := make(map[int]struct{})
-			for _, item := range tc.elements {
-				uniqueMap[item] = struct{}{}
-			}
+	if !resultDiffNoCommon.Equals(s1) {
+		t.Errorf("s1.Difference(s3_no_common) = %v, want %v", resultDiffNoCommon.ToSlice(), s1.ToSlice())
+	}
 
-			for item := range uniqueMap {
-				found := false
-				for _, sliceItem := range slice {
-					if item == sliceItem {
-						found = true
-						break
-					}
-				}
-				assert.True(t, found)
-			}
-		})
+	// Ensure original sets are not modified
+	if !s1.Equals(FromSlice([]int{1, 2, 3, 4})) {
+		t.Error("Original set s1 modified by Difference operation")
+	}
+
+	if !s2.Equals(FromSlice([]int{3, 4, 5, 6})) {
+		t.Error("Original set s2 modified by Difference operation")
 	}
 }
 
-// TestTypes tests the set with different types
-func TestTypes(t *testing.T) {
-	// Test with strings
-	stringSet := New[string]()
-	stringSet.Push("hello", "world")
-	assert.Equal(t, 2, stringSet.Size())
-	assert.True(t, stringSet.Contains("hello"))
+func TestSet_SymmetricDifference(t *testing.T) {
+	s1 := FromSlice([]int{1, 2, 3, 4})
+	s2 := FromSlice([]int{3, 4, 5, 6})
 
-	// Test with float64
-	floatSet := New[float64]()
-	floatSet.Push(1.1, 2.2, 3.3)
-	assert.Equal(t, 3, floatSet.Size())
-	assert.True(t, floatSet.Contains(2.2))
+	// (s1 U s2) - (s1 I s2) = {1,2,3,4,5,6} - {3,4} = {1,2,5,6}
+	expectedSymDiff := FromSlice([]int{1, 2, 5, 6})
+	resultSymDiff := s1.SymmetricDifference(s2)
 
-	// Test with bool
-	boolSet := New[bool]()
-	boolSet.Push(true, false)
-	assert.Equal(t, 2, boolSet.Size())
-	assert.True(t, boolSet.Contains(true))
-	assert.True(t, boolSet.Contains(false))
-
-	// Test with custom struct
-	type Person struct {
-		Name string
-		Age  int
+	if !resultSymDiff.Equals(expectedSymDiff) {
+		t.Errorf("s1.SymmetricDifference(s2) = %v, want %v", resultSymDiff.ToSlice(), expectedSymDiff.ToSlice())
 	}
-	p1 := Person{"Alice", 25}
-	p2 := Person{"Bob", 30}
 
-	personSet := New[Person]()
-	personSet.Push(p1, p2)
-	assert.Equal(t, 2, personSet.Size())
-	assert.True(t, personSet.Contains(p1))
-	assert.True(t, personSet.Contains(p2))
+	// Symmetric difference with empty set
+	sEmpty := New[int]()
+	resultSymDiffEmpty := s1.SymmetricDifference(sEmpty)
+
+	if !resultSymDiffEmpty.Equals(s1) {
+		t.Errorf("s1.SymmetricDifference(empty) = %v, want %v", resultSymDiffEmpty.ToSlice(), s1.ToSlice())
+	}
+
+	resultEmptySymDiffS1 := sEmpty.SymmetricDifference(s1)
+
+	if !resultEmptySymDiffS1.Equals(s1) {
+		t.Errorf("empty.SymmetricDifference(s1) = %v, want %v", resultEmptySymDiffS1.ToSlice(), s1.ToSlice())
+	}
+
+	// Symmetric difference with disjoint sets
+	s3 := FromSlice([]int{10, 11}) // Disjoint from s1
+	expectedDisjointSymDiff := FromSlice([]int{1, 2, 3, 4, 10, 11})
+	resultDisjointSymDiff := s1.SymmetricDifference(s3)
+
+	if !resultDisjointSymDiff.Equals(expectedDisjointSymDiff) {
+		t.Errorf("s1.SymmetricDifference(s3_disjoint) = %v, want %v", resultDisjointSymDiff.ToSlice(), expectedDisjointSymDiff.ToSlice())
+	}
+
+	// Ensure original sets are not modified
+	if !s1.Equals(FromSlice([]int{1, 2, 3, 4})) {
+		t.Error("Original set s1 modified by SymmetricDifference operation")
+	}
+
+	if !s2.Equals(FromSlice([]int{3, 4, 5, 6})) {
+		t.Error("Original set s2 modified by SymmetricDifference operation")
+	}
 }
 
-// TestBenchmark tests the performance of the set
-func BenchmarkSet(b *testing.B) {
-	b.Run("Push", func(b *testing.B) {
-		s := New[int]()
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Push(i)
+func TestSet_IsSubsetOf(t *testing.T) {
+	s1 := FromSlice([]int{1, 2})
+	s2 := FromSlice([]int{1, 2, 3})
+	s3 := FromSlice([]int{1, 3, 4})
+	sEmpty := New[int]()
+
+	if !s1.IsSubsetOf(s2) {
+		t.Errorf("%v.IsSubsetOf(%v) = false, want true", s1.ToSlice(), s2.ToSlice())
+	}
+
+	if s2.IsSubsetOf(s1) {
+		t.Errorf("%v.IsSubsetOf(%v) = true, want false", s2.ToSlice(), s1.ToSlice())
+	}
+
+	if s1.IsSubsetOf(s3) {
+		t.Errorf("%v.IsSubsetOf(%v) = true, want false", s1.ToSlice(), s3.ToSlice())
+	}
+
+	// Empty set is subset of any set
+	if !sEmpty.IsSubsetOf(s1) {
+		t.Errorf("empty.IsSubsetOf(%v) = false, want true", s1.ToSlice())
+	}
+
+	// Set is subset of itself
+	if !s1.IsSubsetOf(s1) {
+		t.Errorf("%v.IsSubsetOf(%v) = false, want true", s1.ToSlice(), s1.ToSlice())
+	}
+
+	// Non-empty set cannot be subset of empty set
+	if s1.IsSubsetOf(sEmpty) && s1.Size() > 0 {
+		t.Errorf("%v.IsSubsetOf(empty) = true, want false", s1.ToSlice())
+	}
+}
+
+func TestSet_Equals(t *testing.T) {
+	s1 := FromSlice([]int{1, 2, 3})
+	s2 := FromSlice([]int{3, 2, 1}) // Same elements, different order
+	s3 := FromSlice([]int{1, 2, 4})
+	s4 := FromSlice([]int{1, 2})
+	sEmpty1 := New[int]()
+	sEmpty2 := New[int]()
+
+	if !s1.Equals(s2) {
+		t.Errorf("%v.Equals(%v) = false, want true", s1.ToSlice(), s2.ToSlice())
+	}
+
+	if s1.Equals(s3) {
+		t.Errorf("%v.Equals(%v) = true, want false", s1.ToSlice(), s3.ToSlice())
+	}
+
+	// Different size
+	if s1.Equals(s4) {
+		t.Errorf("%v.Equals(%v) = true, want false", s1.ToSlice(), s4.ToSlice())
+	}
+
+	// Different size (other way)
+	if s4.Equals(s1) {
+		t.Errorf("%v.Equals(%v) = true, want false", s4.ToSlice(), s1.ToSlice())
+	}
+
+	if !sEmpty1.Equals(sEmpty2) {
+		t.Error("emptySet1.Equals(emptySet2) = false, want true")
+	}
+
+	if s1.Equals(sEmpty1) {
+		t.Errorf("%v.Equals(empty) = true, want false", s1.ToSlice())
+	}
+}
+
+func TestSet_ToSlice(t *testing.T) {
+	s := New[string]()
+	s.Push("hello", "world", "go")
+	expectedElements := []string{"hello", "world", "go"}
+	sliceResult := s.ToSlice()
+
+	if len(sliceResult) != len(expectedElements) {
+		t.Fatalf("ToSlice() length = %d, want %d. Got: %v", len(sliceResult), len(expectedElements), sliceResult)
+	}
+
+	// Check if all expected elements are in the slice (order doesn't matter)
+	tempSet := FromSlice(sliceResult)
+
+	for _, item := range expectedElements {
+		if !tempSet.Contains(item) {
+			t.Errorf("ToSlice() result %v missing element %q from original set %v", sliceResult, item, expectedElements)
 		}
-	})
+	}
 
-	b.Run("Contains", func(b *testing.B) {
-		s := New[int]()
-		for i := 0; i < 1000; i++ {
-			s.Push(i)
-		}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s.Contains(i % 1000)
-		}
-	})
+	// Test on empty set
+	emptyS := New[int]()
+	emptySliceResult := emptyS.ToSlice()
 
-	b.Run("Union", func(b *testing.B) {
-		s1 := New[int]()
-		s2 := New[int]()
-		for i := 0; i < 1000; i++ {
-			s1.Push(i)
-			s2.Push(i + 500)
-		}
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			s1.Union(s2)
-		}
-	})
+	if len(emptySliceResult) != 0 {
+		t.Errorf("ToSlice() on empty set returned slice of length %d, want 0. Got: %v", len(emptySliceResult), emptySliceResult)
+	}
 }
