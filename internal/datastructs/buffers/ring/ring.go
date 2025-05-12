@@ -143,6 +143,22 @@ func (rb *InternalRingBuffer[T]) ToSlice() []T {
 	return result
 }
 
+// Clone creates a deep copy of the source InternalRingBuffer.
+func (rb *InternalRingBuffer[T]) Clone() *InternalRingBuffer[T] {
+	newData := make([]T, rb.capacity)
+	for i := 0; i < rb.size; i++ {
+		newData[i] = rb.data[(rb.head+i)%rb.capacity]
+	}
+
+	return &InternalRingBuffer[T]{
+		data:     newData,
+		head:     0,
+		tail:     rb.size,
+		size:     rb.size,
+		capacity: rb.capacity,
+	}
+}
+
 // resize adjusts the capacity of the buffer to the specified value,
 // reordering the contents so that head = 0 and tail = size.
 func (rb *InternalRingBuffer[T]) resize(newCap int) {

@@ -29,6 +29,15 @@ func FromSlice[T any, A ~[]T](s A, capacity ...int) *RingBuffer[T] {
 	}
 }
 
+// FromSyncRingBuffer creates a new RingBuffer from a given SyncRingBuffer.
+// This results in a deep copy so the underlying buffer won't be connected
+// to the original SyncRingBuffer.
+func FromSyncRingBuffer[T any](src *SyncRingBuffer[T]) *RingBuffer[T] {
+	return &RingBuffer[T]{
+		buffer: src.buffer.Clone(),
+	}
+}
+
 // Len returns the number of elements currently stored in the buffer.
 func (rb *RingBuffer[T]) Len() int {
 	return rb.buffer.Len()
@@ -67,4 +76,11 @@ func (rb *RingBuffer[T]) Peek() (T, bool) {
 // The returned slice is independent of the internal buffer state.
 func (rb *RingBuffer[T]) ToSlice() []T {
 	return rb.buffer.ToSlice()
+}
+
+// Clone creates a deep copy of the source RingBuffer.
+func (rb *RingBuffer[T]) Clone() *RingBuffer[T] {
+	return &RingBuffer[T]{
+		buffer: rb.buffer.Clone(),
+	}
 }

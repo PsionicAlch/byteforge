@@ -509,6 +509,28 @@ func TestInternalRingBuffer_ToSlice(t *testing.T) {
 	}
 }
 
+func TestInternalRingBuffer_Clone(t *testing.T) {
+	src := FromSlice([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+	dst := src.Clone()
+
+	if !slices.Equal(src.ToSlice(), dst.ToSlice()) {
+		t.Error("Expected src and destination to have the same underlying data.")
+	}
+
+	src.Enqueue(11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+
+	if slices.Equal(src.ToSlice(), dst.ToSlice()) {
+		t.Error("Expected src and destination to have the varying underlying data.")
+	}
+
+	dstSlice := dst.ToSlice()
+	for _, num := range []int{11, 12, 13, 14, 15, 16, 17, 18, 19, 20} {
+		if slices.Contains(dstSlice, num) {
+			t.Errorf("dst slice was not supposed to contain %d", num)
+		}
+	}
+}
+
 func TestInternalRingBuffer_resize(t *testing.T) {
 	scenarios := []struct {
 		name         string

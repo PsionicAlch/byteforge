@@ -21,6 +21,14 @@ func TestRingBuffer_New(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			buf := New[int](scenario.capacity...)
 
+			if buf == nil {
+				t.Fatal("Expected buf to not be nil")
+			}
+
+			if buf.buffer == nil {
+				t.Fatal("Expected buf.buffer to not be nil")
+			}
+
 			if buf.Len() != scenario.expectedSize {
 				t.Errorf("Expected buffer's size to be %d. Got %d.", scenario.expectedSize, buf.Len())
 			}
@@ -49,6 +57,14 @@ func TestRingBuffer_FromSlice(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			buf := FromSlice(scenario.slice, scenario.capacity...)
 
+			if buf == nil {
+				t.Fatal("Expected buf to not be nil")
+			}
+
+			if buf.buffer == nil {
+				t.Fatal("Expected buf.buffer to not be nil")
+			}
+
 			if buf.Len() != scenario.expectedSize {
 				t.Errorf("Expected buffer's size to be %d. Got %d.", scenario.expectedSize, buf.Len())
 			}
@@ -66,7 +82,46 @@ func TestRingBuffer_FromSlice(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_Len(t *testing.T) {
+func TestRingBuffer_FromSyncRingBuffer(t *testing.T) {
+	src := SyncFromSlice([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
+	dst := FromSyncRingBuffer(src)
+
+	if dst == nil {
+		t.Fatal("Expected dst to not be nil")
+	}
+
+	if dst.buffer == nil {
+		t.Fatal("Expected dst.buffer to not be nil")
+	}
+
+	if dst.Len() != src.Len() {
+		t.Error("Expected dst.Len() to be equal to src.Len()")
+	}
+
+	if dst.Cap() != src.Cap() {
+		t.Error("Expected dst.Cap() to be equal to src.Cap()")
+	}
+
+	if !slices.Equal(src.ToSlice(), dst.ToSlice()) {
+		t.Error("Expected src.ToSlice to be equal to dst.ToSlice.")
+	}
+
+	src.Enqueue(10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+
+	if dst.Len() == src.Len() {
+		t.Error("Did not expect dst.Len() to be equal to src.Len()")
+	}
+
+	if dst.Cap() == src.Cap() {
+		t.Error("Did not expect dst.Cap() to be equal to src.Cap()")
+	}
+
+	if slices.Equal(src.ToSlice(), dst.ToSlice()) {
+		t.Error("Did not expect src.ToSlice to be equal to dst.ToSlice.")
+	}
+}
+
+func TestRingBuffer_Len(t *testing.T) {
 	scenarios := []struct {
 		name        string
 		data        []int
@@ -91,7 +146,7 @@ func TestInternalRingBuffer_Len(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_Cap(t *testing.T) {
+func TestRingBuffer_Cap(t *testing.T) {
 	scenarios := []struct {
 		name             string
 		data             []int
@@ -118,7 +173,7 @@ func TestInternalRingBuffer_Cap(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_IsEmpty(t *testing.T) {
+func TestRingBuffer_IsEmpty(t *testing.T) {
 	scenarios := []struct {
 		name            string
 		data            []int
@@ -145,7 +200,7 @@ func TestInternalRingBuffer_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_Enqueue(t *testing.T) {
+func TestRingBuffer_Enqueue(t *testing.T) {
 	scenarios := []struct {
 		name               string
 		initial            []int
@@ -229,7 +284,7 @@ func TestInternalRingBuffer_Enqueue(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_Dequeue(t *testing.T) {
+func TestRingBuffer_Dequeue(t *testing.T) {
 	scenarios := []struct {
 		name              string
 		initial           []int
@@ -302,7 +357,7 @@ func TestInternalRingBuffer_Dequeue(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_Peek(t *testing.T) {
+func TestRingBuffer_Peek(t *testing.T) {
 	scenarios := []struct {
 		name         string
 		initial      []int
@@ -362,7 +417,7 @@ func TestInternalRingBuffer_Peek(t *testing.T) {
 	}
 }
 
-func TestInternalRingBuffer_ToSlice(t *testing.T) {
+func TestRingBuffer_ToSlice(t *testing.T) {
 	scenarios := []struct {
 		name           string
 		setup          func() *RingBuffer[int]
@@ -506,6 +561,28 @@ func TestInternalRingBuffer_ToSlice(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestRingBuffer_Clone(t *testing.T) {
+	src := FromSlice([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+	dst := src.Clone()
+
+	if !slices.Equal(src.ToSlice(), dst.ToSlice()) {
+		t.Error("Expected src and destination to have the same underlying data.")
+	}
+
+	src.Enqueue(11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+
+	if slices.Equal(src.ToSlice(), dst.ToSlice()) {
+		t.Error("Expected src and destination to have the varying underlying data.")
+	}
+
+	dstSlice := dst.ToSlice()
+	for _, num := range []int{11, 12, 13, 14, 15, 16, 17, 18, 19, 20} {
+		if slices.Contains(dstSlice, num) {
+			t.Errorf("dstSlice was not supposed to contain %d", num)
+		}
 	}
 }
 
