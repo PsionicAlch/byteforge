@@ -362,6 +362,153 @@ func TestInternalRingBuffer_Peek(t *testing.T) {
 	}
 }
 
+func TestInternalRingBuffer_ToSlice(t *testing.T) {
+	scenarios := []struct {
+		name           string
+		setup          func() *InternalRingBuffer[int]
+		expectedSlice  []int
+		expectedSize   int
+		expectedBuffer []int
+	}{
+		{
+			name: "Empty buffer",
+			setup: func() *InternalRingBuffer[int] {
+				return New[int]()
+			},
+			expectedSlice:  []int{},
+			expectedSize:   0,
+			expectedBuffer: []int{},
+		},
+		{
+			name: "Buffer with single element",
+			setup: func() *InternalRingBuffer[int] {
+				buf := New[int]()
+				buf.Enqueue(42)
+				return buf
+			},
+			expectedSlice:  []int{42},
+			expectedSize:   1,
+			expectedBuffer: []int{42},
+		},
+		{
+			name: "Buffer with multiple elements",
+			setup: func() *InternalRingBuffer[int] {
+				buf := New[int]()
+				buf.Enqueue(1, 2, 3, 4, 5)
+				return buf
+			},
+			expectedSlice:  []int{1, 2, 3, 4, 5},
+			expectedSize:   5,
+			expectedBuffer: []int{1, 2, 3, 4, 5},
+		},
+		{
+			name: "Buffer with wrapped elements (head > 0)",
+			setup: func() *InternalRingBuffer[int] {
+				buf := New[int](5)
+				buf.Enqueue(1, 2, 3, 4, 5)
+				buf.Dequeue()
+				buf.Dequeue()
+				buf.Enqueue(6, 7)
+				return buf
+			},
+			expectedSlice:  []int{3, 4, 5, 6, 7},
+			expectedSize:   5,
+			expectedBuffer: []int{3, 4, 5, 6, 7},
+		},
+		{
+			name: "Buffer after resize",
+			setup: func() *InternalRingBuffer[int] {
+				buf := New[int](4)
+				buf.Enqueue(1, 2, 3, 4)
+				buf.Enqueue(5)
+				return buf
+			},
+			expectedSlice:  []int{1, 2, 3, 4, 5},
+			expectedSize:   5,
+			expectedBuffer: []int{1, 2, 3, 4, 5},
+		},
+		{
+			name: "Buffer after many enqueue/dequeue operations",
+			setup: func() *InternalRingBuffer[int] {
+				buf := New[int](3)
+				buf.Enqueue(1, 2, 3)
+				buf.Dequeue()
+				buf.Dequeue()
+				buf.Enqueue(4, 5)
+				buf.Dequeue()
+				buf.Enqueue(6)
+				return buf
+			},
+			expectedSlice:  []int{4, 5, 6},
+			expectedSize:   3,
+			expectedBuffer: []int{4, 5, 6},
+		},
+		{
+			name: "FromSlice initialization",
+			setup: func() *InternalRingBuffer[int] {
+				return FromSlice([]int{10, 20, 30, 40})
+			},
+			expectedSlice:  []int{10, 20, 30, 40},
+			expectedSize:   4,
+			expectedBuffer: []int{10, 20, 30, 40},
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			buf := scenario.setup()
+
+			if buf.Len() != scenario.expectedSize {
+				t.Errorf("Before ToSlice: Expected size %d, got %d", scenario.expectedSize, buf.Len())
+			}
+
+			result := buf.ToSlice()
+
+			if len(result) != len(scenario.expectedSlice) {
+				t.Errorf("ToSlice result length: Expected %d, got %d",
+					len(scenario.expectedSlice), len(result))
+			}
+
+			for i, expected := range scenario.expectedSlice {
+				if i >= len(result) {
+					t.Errorf("Missing expected element at index %d: %v", i, expected)
+					continue
+				}
+				if result[i] != expected {
+					t.Errorf("Element mismatch at index %d: Expected %v, got %v",
+						i, expected, result[i])
+				}
+			}
+
+			bufferSlice := []int{}
+			originalSize := buf.Len()
+			for i := 0; i < originalSize; i++ {
+				val, ok := buf.Dequeue()
+				if !ok {
+					t.Fatalf("Failed to dequeue element %d", i)
+				}
+				bufferSlice = append(bufferSlice, val)
+			}
+
+			if len(bufferSlice) != len(scenario.expectedBuffer) {
+				t.Errorf("After ToSlice - Buffer size changed: Expected %d, got %d",
+					len(scenario.expectedBuffer), len(bufferSlice))
+			}
+
+			for i, expected := range scenario.expectedBuffer {
+				if i >= len(bufferSlice) {
+					t.Errorf("After ToSlice - Missing expected element at index %d: %v", i, expected)
+					continue
+				}
+				if bufferSlice[i] != expected {
+					t.Errorf("After ToSlice - Element mismatch at index %d: Expected %v, got %v",
+						i, expected, bufferSlice[i])
+				}
+			}
+		})
+	}
+}
+
 func TestInternalRingBuffer_resize(t *testing.T) {
 	scenarios := []struct {
 		name         string
