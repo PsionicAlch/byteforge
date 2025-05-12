@@ -1,4 +1,4 @@
-package ring
+package queue
 
 import (
 	"slices"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestSyncRingBuffer_New(t *testing.T) {
+func TestSyncQueue_New(t *testing.T) {
 	scenarios := []struct {
 		name         string
 		capacity     []int
@@ -41,7 +41,7 @@ func TestSyncRingBuffer_New(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_FromSlice(t *testing.T) {
+func TestSyncQueue_FromSlice(t *testing.T) {
 	scenarios := []struct {
 		name         string
 		slice        []int
@@ -83,9 +83,9 @@ func TestSyncRingBuffer_FromSlice(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_SyncFromRingBuffer(t *testing.T) {
+func TestSyncQueue_SyncFromRingBuffer(t *testing.T) {
 	src := FromSlice([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
-	dst := SyncFromRingBuffer(src)
+	dst := SyncFromQueue(src)
 
 	if dst == nil {
 		t.Fatal("Expected dst to not be nil")
@@ -122,7 +122,7 @@ func TestSyncRingBuffer_SyncFromRingBuffer(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_Len(t *testing.T) {
+func TestSyncQueue_Len(t *testing.T) {
 	scenarios := []struct {
 		name        string
 		data        []int
@@ -155,7 +155,7 @@ func TestSyncRingBuffer_Len(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_Cap(t *testing.T) {
+func TestSyncQueue_Cap(t *testing.T) {
 	scenarios := []struct {
 		name             string
 		data             []int
@@ -193,7 +193,7 @@ func TestSyncRingBuffer_Cap(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_IsEmpty(t *testing.T) {
+func TestSyncQueue_IsEmpty(t *testing.T) {
 	scenarios := []struct {
 		name            string
 		data            []int
@@ -231,7 +231,7 @@ func TestSyncRingBuffer_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_Enqueue(t *testing.T) {
+func TestSyncQueue_Enqueue(t *testing.T) {
 	const max = 1000
 
 	buf := NewSync[int]()
@@ -254,7 +254,7 @@ func TestSyncRingBuffer_Enqueue(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_Dequeue(t *testing.T) {
+func TestSyncQueue_Dequeue(t *testing.T) {
 	const max = 1000
 
 	buf := NewSync[int]()
@@ -290,7 +290,7 @@ func TestSyncRingBuffer_Dequeue(t *testing.T) {
 	}
 }
 
-func TestSyncRingBuffer_Peek(t *testing.T) {
+func TestSyncQueue_Peek(t *testing.T) {
 	buf := SyncFromSlice([]int{1, 2, 3, 4, 5})
 	expectedValue := 1
 
@@ -316,7 +316,7 @@ func TestSyncRingBuffer_Peek(t *testing.T) {
 	wg.Wait()
 }
 
-func TestSyncRingBuffer_ToSlice(t *testing.T) {
+func TestSyncQueue_ToSlice(t *testing.T) {
 	data := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	buf := SyncFromSlice(data)
 
@@ -337,7 +337,7 @@ func TestSyncRingBuffer_ToSlice(t *testing.T) {
 	wg.Wait()
 }
 
-func TestSyncRingBuffer_Clone(t *testing.T) {
+func TestSyncQueue_Clone(t *testing.T) {
 	src := SyncFromSlice([]int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
 
 	var wg sync.WaitGroup
@@ -365,6 +365,32 @@ func TestSyncRingBuffer_Clone(t *testing.T) {
 				if slices.Contains(srcSlice, num) {
 					t.Errorf("srcSlice was not supposed to contain %d", num)
 				}
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestSyncQueue_Equal(t *testing.T) {
+	q1 := SyncFromSlice([]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9})
+	q2 := q1.Clone()
+	q3 := SyncFromSlice([]int{10, 11, 12, 13, 14, 15, 16, 17, 18, 19})
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 1000; i++ {
+		wg.Add(1)
+
+		go func() {
+			wg.Done()
+
+			if !q1.Equals(q2) {
+				t.Error("Expected q1 to be equal to q2")
+			}
+
+			if q1.Equals(q3) {
+				t.Error("Did not expect q1 to be equal to q3")
 			}
 		}()
 	}

@@ -2,7 +2,8 @@ package set
 
 import (
 	"sync"
-	"unsafe"
+
+	"github.com/PsionicAlch/byteforge/internal/functions/utils"
 )
 
 // SyncSet implements a generic set data structure with thread-safety
@@ -131,7 +132,7 @@ func (s *SyncSet[T]) Clone() *SyncSet[T] {
 // Union returns a new SyncSet containing all elements from both SyncSets
 func (s *SyncSet[T]) Union(other *SyncSet[T]) *SyncSet[T] {
 	// Lock both in address order to avoid deadlock
-	first, second := sortSyncSetByAddress(s, other)
+	first, second := utils.SortByAddress(s, other)
 
 	first.mu.RLock()
 	defer first.mu.RUnlock()
@@ -145,7 +146,7 @@ func (s *SyncSet[T]) Union(other *SyncSet[T]) *SyncSet[T] {
 // Intersection returns a new SyncSet containing elements present in both SyncSets
 func (s *SyncSet[T]) Intersection(other *SyncSet[T]) *SyncSet[T] {
 	// Lock both in address order to avoid deadlock
-	first, second := sortSyncSetByAddress(s, other)
+	first, second := utils.SortByAddress(s, other)
 
 	first.mu.RLock()
 	defer first.mu.RUnlock()
@@ -159,7 +160,7 @@ func (s *SyncSet[T]) Intersection(other *SyncSet[T]) *SyncSet[T] {
 // Difference returns a new SyncSet containing elements in s that are not in other
 func (s *SyncSet[T]) Difference(other *SyncSet[T]) *SyncSet[T] {
 	// Lock both in address order to avoid deadlock
-	first, second := sortSyncSetByAddress(s, other)
+	first, second := utils.SortByAddress(s, other)
 
 	first.mu.RLock()
 	defer first.mu.RUnlock()
@@ -173,7 +174,7 @@ func (s *SyncSet[T]) Difference(other *SyncSet[T]) *SyncSet[T] {
 // SymmetricDifference returns a new SyncSet with elements in either SyncSet but not in both
 func (s *SyncSet[T]) SymmetricDifference(other *SyncSet[T]) *SyncSet[T] {
 	// Lock both in address order to avoid deadlock
-	first, second := sortSyncSetByAddress(s, other)
+	first, second := utils.SortByAddress(s, other)
 
 	first.mu.RLock()
 	defer first.mu.RUnlock()
@@ -187,7 +188,7 @@ func (s *SyncSet[T]) SymmetricDifference(other *SyncSet[T]) *SyncSet[T] {
 // IsSubsetOf returns true if all elements in s are also in other
 func (s *SyncSet[T]) IsSubsetOf(other *SyncSet[T]) bool {
 	// Lock both in address order to avoid deadlock
-	first, second := sortSyncSetByAddress(s, other)
+	first, second := utils.SortByAddress(s, other)
 
 	first.mu.RLock()
 	defer first.mu.RUnlock()
@@ -201,7 +202,7 @@ func (s *SyncSet[T]) IsSubsetOf(other *SyncSet[T]) bool {
 // Equals returns true if both sets contain exactly the same elements
 func (s *SyncSet[T]) Equals(other *SyncSet[T]) bool {
 	// Lock both in address order to avoid deadlock
-	first, second := sortSyncSetByAddress(s, other)
+	first, second := utils.SortByAddress(s, other)
 
 	first.mu.RLock()
 	defer first.mu.RUnlock()
@@ -218,12 +219,4 @@ func (s *SyncSet[T]) ToSlice() []T {
 	defer s.mu.RUnlock()
 
 	return s.set.ToSlice()
-}
-
-func sortSyncSetByAddress[T comparable](a, b *SyncSet[T]) (*SyncSet[T], *SyncSet[T]) {
-	if uintptr(unsafe.Pointer(a)) < uintptr(unsafe.Pointer(b)) {
-		return a, b
-	}
-
-	return b, a
 }

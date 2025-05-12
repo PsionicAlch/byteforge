@@ -20,7 +20,7 @@ type SyncRingBuffer[T any] struct {
 
 // SyncNew returns a new SyncRingBuffer with an optional initial capacity.
 // If no capacity is provided or the provided value is <= 0, a default of 8 is used.
-func SyncNew[T any](capacity ...int) *SyncRingBuffer[T] {
+func NewSync[T any](capacity ...int) *SyncRingBuffer[T] {
 	return &SyncRingBuffer[T]{
 		buffer: ring.New[T](capacity...),
 	}
