@@ -210,7 +210,7 @@ func TestSyncRingBuffer_IsEmpty(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			buf := New[int](scenario.desiredCapacity...)
+			buf := NewSync[int](scenario.desiredCapacity...)
 			buf.Enqueue(scenario.data...)
 
 			var wg sync.WaitGroup
