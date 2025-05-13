@@ -3,12 +3,13 @@ package tuple
 import (
 	"fmt"
 	"slices"
+	"sync"
 	"testing"
 
 	islices "github.com/PsionicAlch/byteforge/internal/functions/slices"
 )
 
-func TestTuple_New(t *testing.T) {
+func TestSyncTuple_New(t *testing.T) {
 	scenarios := []struct {
 		name string
 		data []int
@@ -22,7 +23,7 @@ func TestTuple_New(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			tup := New(scenario.data...)
+			tup := NewSync(scenario.data...)
 
 			if tup == nil {
 				t.Error("Expected tup to not be nil")
@@ -43,7 +44,7 @@ func TestTuple_New(t *testing.T) {
 	}
 }
 
-func TestTuple_FromSlice(t *testing.T) {
+func TestSyncTuple_FromSlice(t *testing.T) {
 	scenarios := []struct {
 		name string
 		data []int
@@ -57,7 +58,7 @@ func TestTuple_FromSlice(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			tup := FromSlice(scenario.data)
+			tup := SyncFromSlice(scenario.data)
 
 			if tup == nil {
 				t.Error("Expected tup to not be nil")
@@ -78,7 +79,7 @@ func TestTuple_FromSlice(t *testing.T) {
 	}
 }
 
-func TestTuple_Len(t *testing.T) {
+func TestSyncTuple_Len(t *testing.T) {
 	scenarios := []struct {
 		name string
 		data []int
@@ -92,16 +93,27 @@ func TestTuple_Len(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			tup := FromSlice(scenario.data)
+			tup := SyncFromSlice(scenario.data)
 
-			if tup.Len() != len(scenario.data) {
-				t.Errorf("Expected tup.Len() to be %d. Got %d", len(scenario.data), tup.data.Len())
+			var wg sync.WaitGroup
+
+			for i := 0; i < 1000; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+
+					if tup.Len() != len(scenario.data) {
+						t.Errorf("Expected tup.Len() to be %d. Got %d", len(scenario.data), tup.data.Len())
+					}
+				}()
 			}
+
+			wg.Wait()
 		})
 	}
 }
 
-func TestTuple_Get(t *testing.T) {
+func TestSyncTuple_Get(t *testing.T) {
 	scenarios := []struct {
 		name string
 		data []int
@@ -115,46 +127,64 @@ func TestTuple_Get(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			tup := FromSlice(scenario.data)
+			tup := SyncFromSlice(scenario.data)
 
-			for index := range scenario.data {
-				element, found := tup.Get(index)
+			var wg sync.WaitGroup
 
-				if !found {
-					t.Errorf("Expected to find element at index %d", index)
-				} else {
-					if element != scenario.data[index] {
-						t.Errorf("Expected element to be %d. Got %d", scenario.data[index], element)
+			for i := 0; i < 1000; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+
+					for index := range scenario.data {
+						element, found := tup.Get(index)
+
+						if !found {
+							t.Errorf("Expected to find element at index %d", index)
+						} else {
+							if element != scenario.data[index] {
+								t.Errorf("Expected element to be %d. Got %d", scenario.data[index], element)
+							}
+						}
+
 					}
-				}
 
+					_, found := tup.Get(len(scenario.data))
+					if found {
+						t.Error("Found element at index outside the valid range.")
+					}
+				}()
 			}
 
-			_, found := tup.Get(len(scenario.data))
-			if found {
-				t.Error("Found element at index outside the valid range.")
-			}
+			wg.Wait()
 		})
 	}
 }
 
-func TestTuple_Set(t *testing.T) {
-	tup := New(1)
+func TestSyncTuple_Set(t *testing.T) {
+	tup := NewSync(1)
 
-	if !tup.Set(0, 2) {
-		t.Error("Failed to set first element.")
+	var wg sync.WaitGroup
+
+	for i := 0; i < 1000; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			if !tup.Set(0, i) {
+				t.Error("Failed to set first element.")
+			}
+
+			if tup.Set(1, i) {
+				t.Error("Set element outside of valid range.")
+			}
+		}()
 	}
 
-	if element, found := tup.Get(0); found && element != 2 {
-		t.Errorf("Expected element to be 2. Got %d", element)
-	}
-
-	if tup.Set(1, 2) {
-		t.Error("Set element outside of valid range.")
-	}
+	wg.Wait()
 }
 
-func TestTuple_ToSlice(t *testing.T) {
+func TestSyncTuple_ToSlice(t *testing.T) {
 	scenarios := []struct {
 		name string
 		data []int
@@ -168,16 +198,27 @@ func TestTuple_ToSlice(t *testing.T) {
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
-			tup := FromSlice(scenario.data)
+			tup := SyncFromSlice(scenario.data)
 
-			if !slices.Equal(tup.ToSlice(), scenario.data) {
-				t.Error("Expected tup.ToSlice() to be equal to scenario.data")
+			var wg sync.WaitGroup
+
+			for i := 0; i < 1000; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+
+					if !slices.Equal(tup.ToSlice(), scenario.data) {
+						t.Error("Expected tup.ToSlice() to be equal to scenario.data")
+					}
+				}()
 			}
+
+			wg.Wait()
 		})
 	}
 }
 
-func TestTuple_String(t *testing.T) {
+func TestSyncTuple_String(t *testing.T) {
 	scenarios := []struct {
 		name string
 		data []int
@@ -194,9 +235,20 @@ func TestTuple_String(t *testing.T) {
 			tup := FromSlice(scenario.data)
 			s := fmt.Sprintf("%v", scenario.data)
 
-			if tup.String() != s {
-				t.Errorf("Expected tup.String() to be equal to \"%s\"", s)
+			var wg sync.WaitGroup
+
+			for i := 0; i < 1000; i++ {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+
+					if tup.String() != s {
+						t.Errorf("Expected tup.String() to be equal to \"%s\"", s)
+					}
+				}()
 			}
+
+			wg.Wait()
 		})
 	}
 }
