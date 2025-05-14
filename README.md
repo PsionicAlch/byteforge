@@ -221,13 +221,19 @@ func main() {
 }
 ```
 
+---
+
 ## Contributing
 
 Contributions, feature requests, and bug reports are welcome! Please open an issue or submit a PR.
 
+---
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
+---
 
 ## Author
 
