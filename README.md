@@ -73,7 +73,7 @@ go get -u "github.com/PsionicAlch/byteforge@latest"
 All data structures come with a basic version and a thread-safe version. The thread-safe version is usually prefixed with "Sync" but the underlying API is the same and allow you to freely convert between the basic and thread-safe versions.
 
 <details>
-<summary>#### Ring Buffer</summary>
+<summary><h4>Ring Buffer</h4></summary>
 
 Ring Buffer is a generic dynamically resizable circular buffer. It supports enqueue and dequeue operations in constant amortized time, and grows or shrinks based on usage to optimize memory consumption.
 
