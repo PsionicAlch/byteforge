@@ -70,7 +70,7 @@ func TestParallelMap(t *testing.T) {
 		largeExpected[i] = i * 2
 	}
 
-	t.Run("Map from int to int", func(t *testing.T) {
+	t.Run("Parallel map from int to int", func(t *testing.T) {
 		result := ParallelMap([]int{0, 1, 2, 3, 4, 5}, func(num int) int {
 			return num * 2
 		})
@@ -81,7 +81,7 @@ func TestParallelMap(t *testing.T) {
 		}
 	})
 
-	t.Run("Map from int to string", func(t *testing.T) {
+	t.Run("Parallel map from int to string", func(t *testing.T) {
 		result := ParallelMap([]int{0, 1, 2, 3, 4, 5}, func(num int) string {
 			return strconv.Itoa(num)
 		})
@@ -92,7 +92,7 @@ func TestParallelMap(t *testing.T) {
 		}
 	})
 
-	t.Run("Map with empty slice", func(t *testing.T) {
+	t.Run("Parallel map with empty slice", func(t *testing.T) {
 		result := ParallelMap([]int{}, func(num int) int {
 			return num
 		})
@@ -103,7 +103,7 @@ func TestParallelMap(t *testing.T) {
 		}
 	})
 
-	t.Run("Map with huge slice", func(t *testing.T) {
+	t.Run("Parallel map with huge slice", func(t *testing.T) {
 		result := ParallelMap(largeArr, func(num int) int {
 			return num * 2
 		})
@@ -113,7 +113,7 @@ func TestParallelMap(t *testing.T) {
 		}
 	})
 
-	t.Run("Map with negative worker pool", func(t *testing.T) {
+	t.Run("Parallel map with negative worker pool", func(t *testing.T) {
 		result := ParallelMap([]int{0, 1, 2, 3, 4, 5}, func(num int) int {
 			return num * 2
 		}, -10)
@@ -124,7 +124,7 @@ func TestParallelMap(t *testing.T) {
 		}
 	})
 
-	t.Run("Map with positive worker pool", func(t *testing.T) {
+	t.Run("Parallel map with positive worker pool", func(t *testing.T) {
 		result := ParallelMap(largeArr, func(num int) int {
 			return num * 2
 		}, 50)

@@ -26,16 +26,23 @@ Byteforge is a modular collection of handcrafted Go data structures, concurrency
 - [X] Deep Equals (slices.DeepEquals)
 - [X] Inclusive Range (slices.IRange)
 - [X] Exclusive Range (slices.ERange)
-- [ ] Map
-- [ ] Filter
+- [X] Map (slices.Map)
+- [X] Filter (slices.Filter)
 - [ ] Reduce
-- [ ] Parallel Map
-- [ ] Parallel Filter
+- [X] Parallel Map (slices.ParallelMap)
+- [X] Parallel Filter (slices.ParallelFilter)
 - [ ] Parallel Reduce
 - [ ] Partition
 - [ ] Chunk
 - [ ] Unique
 - [ ] Flatten
+
+#### Maps
+
+- [ ] Map
+- [ ] Filter
+- [ ] Parallel Map
+- [ ] Parallel Filter
 
 (It's not an exhaustive list, it's just what came to my mind up until now. More will be added as they are required or provided)
 
