@@ -396,6 +396,68 @@ func main() {
 }
 ```
 </details>
+
+<details>
+<summary><strong>Set</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>Tuple</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+### Utility Functions
+
+<details>
+<summary><strong>slices.ShallowEquals</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.DeepEquals</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.IRange</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.ERange</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.Map</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.Filter</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.ParallelMap</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
+
+<details>
+<summary><strong>slices.ParallelFilter</strong></summary>
+
+🚧 Documentation is currently under construction 🚧
+</details>
 ---
 
 ## Contributing
