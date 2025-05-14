@@ -1,3 +1,4 @@
+// Queue is a generic dynamically resizable FIFO Queue. It supports enqueue and dequeue operations in constant amortized time, and grows or shrinks based on usage to optimize memory consumption.
 package queue
 
 import (
