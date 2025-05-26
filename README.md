@@ -76,20 +76,17 @@ go get -u "github.com/PsionicAlch/byteforge@latest"
 
 ### Collection
 
-Collection provides a fluent, chainable API for performing functional-style operations like map, filter, and reduce on slices.
+`Collection` provides a fluent, chainable API for performing functional-style operations like map, filter, and reduce on slices.
 
 <details>
 <summary><strong>Collection</strong></summary>
 
-Collection is roughly based off Laravel's [Collections](https://laravel.com/docs/12.x/collections) package. It's not as feature rich, so feel free to make any feature requests or send a pull request if you want to get your hands dirty. 
+`Collection` is roughly based off Laravel's [Collections](https://laravel.com/docs/12.x/collections) package. It's not as feature rich, so feel free to make any feature requests or send a pull request if you want to get your hands dirty. 
 
-Honestly, I would **not** suggest using Collection in production yet.  
-Because of the current [lack of generics for methods](https://github.com/golang/go/issues/49085), I had to use a lot of `any` and `reflect`.  
-The code **looks pretty** when you chain a bunch of method calls together, and you can paint a really nice picture of how the data mutates over time —  
-but I'd recommend sticking with [byteforge/functions/slices](#slices-map) instead.
+Honestly, I would **not** suggest using `Collection` in production yet.  
+Because of the current [lack of generics for methods](https://github.com/golang/go/issues/49085), I had to use a lot of `any` and `reflect`. The code **looks pretty** when you chain a bunch of method calls together, and you can paint a really nice picture of how the data mutates over time, but I'd recommend sticking with [byteforge/functions/slices](#slices-map) instead.
 
-You won't get the pretty chainability or the smooth data flow, and you'll need intermediate variables,  
-but you'll get **much better performance**, **full type safety** and **full IntelliSense support**.
+You won't get the pretty chainability or the smooth data flow, and you'll need intermediate variables, but you'll get **much better performance**, **full type safety** and **full IntelliSense support**.
 
 ```go
 import (
@@ -184,12 +181,12 @@ func main() {
 
 ### Data Structures
 
-All data structures come with a basic version and a thread-safe version. The thread-safe version is usually prefixed with "Sync" but the underlying API is the same and allow you to freely convert between the basic and thread-safe versions.
+All data structures come with a basic version and a thread-safe version. The thread-safe version is usually prefixed with `Sync` but the underlying API is the same and allow you to freely convert between the basic and thread-safe versions.
 
 <details>
 <summary><strong>Ring Buffer</strong></summary>
 
-Ring Buffer is a generic dynamically resizable circular buffer. It supports enqueue and dequeue operations in constant amortized time, and grows or shrinks based on usage to optimize memory consumption.
+`RingBuffer` is a generic dynamically resizable circular buffer. It supports enqueue and dequeue operations in constant amortized time, and grows or shrinks based on usage to optimize memory consumption.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/buffers/ring"
@@ -253,7 +250,7 @@ func main() {
 }
 ```
 
-The basic version of Ring Buffer isn't thread-safe so I wouldn't suggest sharing it between threads without the use of a mutex. If, however, you're not in the mood to manage your own mutexes I got you covered. I made sure to create a thread-safe version of Ring Buffer called Sync Ring Buffer. It's not as optimised as it can be because I just wrapped the basic version with a RWMutex instead of using atomic operations for things like managing the size and capacity but everything works just fine. You shouldn't really notice the difference in performance. The API for Sync Ring Buffer is also the same as the basic Ring Buffer.
+The basic version of `RingBuffer` isn't thread-safe so I wouldn't suggest sharing it between threads without the use of a mutex. If, however, you're not in the mood to manage your own mutexes I got you covered. I made sure to create a thread-safe version of `RingBuffer` called `SyncRingBuffer`. It's not as optimised as it can be because I just wrapped the basic version with a `RWMutex` instead of using atomic operations for things like managing the size and capacity but everything works just fine. You shouldn't really notice the difference in performance. The API for `SyncRingBuffer` is also the same as the basic `RingBuffer`.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/buffers/ring"
@@ -317,7 +314,7 @@ func main() {
 }
 ```
 
-You can also easily convert between the basic and sync versions of Ring Buffer. Although keep in mind that each conversion will result in a deep clone being produced so it's not the fastest operating in the world but at least it's safe.
+You can also easily convert between the basic and sync versions of `RingBuffer`. Although keep in mind that each conversion will result in a deep clone being produced so it's not the fastest operating in the world but at least it's safe.
 
 ```go
 import "slices"
@@ -345,7 +342,7 @@ func main() {
 <details>
 <summary><strong>FIFO Queue (First In, First Out Queue)</strong></summary>
 
-Queue is a generic dynamically resizable FIFO Queue. It supports enqueue and dequeue operations in constant amortized time, and grows or shrinks based on usage to optimize memory consumption.
+`Queue` is a generic dynamically resizable FIFO Queue. It supports enqueue and dequeue operations in constant amortized time, and grows or shrinks based on usage to optimize memory consumption.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/queue"
@@ -416,7 +413,7 @@ func main() {
 }
 ```
 
-The basic version of Queue isn't thread-safe so I wouldn't suggest sharing it between threads without the use of a mutex. If, however, you're not in the mood to manage your own mutexes I got you covered. I made sure to create a thread-safe version of Queue called Sync Queue. It's not as optimised as it can be because I just wrapped the basic version with a RWMutex instead of using atomic operations for things like managing the size and capacity but everything works just fine. You shouldn't really notice the difference in performance. The API for Sync Queue is also the same as the basic Queue.
+The basic version of `Queue` isn't thread-safe so I wouldn't suggest sharing it between threads without the use of a mutex. If, however, you're not in the mood to manage your own mutexes I got you covered. I made sure to create a thread-safe version of `Queue` called `SyncQueue`. It's not as optimised as it can be because I just wrapped the basic version with a `RWMutex` instead of using atomic operations for things like managing the size and capacity but everything works just fine. You shouldn't really notice the difference in performance. The API for `SyncQueue` is also the same as the basic `Queue`.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/queue"
@@ -486,7 +483,7 @@ func main() {
 }
 ```
 
-You can also easily convert between the basic and sync versions of Queue. Although keep in mind that each conversion will result in a deep clone being produced so it's not the fastest operating in the world but at least it's safe.
+You can also easily convert between the basic and sync versions of `Queue`. Although keep in mind that each conversion will result in a deep clone being produced so it's not the fastest operating in the world but at least it's safe.
 
 ```go
 import "slices"
@@ -514,7 +511,7 @@ func main() {
 <details>
 <summary><strong>Set</strong></summary>
 
-Set is a generic collection that stores unique elements — no duplicates allowed. It supports typical set operations like union, intersection, difference, and symmetric difference. Internally, it’s backed by Go’s native `map` type, providing fast lookups, inserts, and deletes.
+`Set` is a generic collection that stores unique elements — no duplicates allowed. It supports typical set operations like union, intersection, difference, and symmetric difference. Internally, it’s backed by Go’s native `map` type, providing fast lookups, inserts, and deletes.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/set"
@@ -599,7 +596,7 @@ func main() {
 }
 ```
 
-SyncSet is the thread-safe sibling of Set. Under the hood, it wraps everything with a good ol’ `sync.RWMutex`, so you don’t have to think about race conditions or panic when you run `go test -race`.  
+`SyncSet` is the thread-safe sibling of `Set`. Under the hood, it wraps everything with a good ol’ `sync.RWMutex`, so you don’t have to think about race conditions or panic when you run `go test -race`.  
 
 Sure, it’s maybe not as hyper-optimized as an atomic-powered beast, but for most use cases, it’s **more than fast enough** and it’ll save you from those 2 a.m. debugging sessions.
 
@@ -714,7 +711,7 @@ func main() {
 <details>
 <summary><strong>Tuple</strong></summary>
 
-Tuple provides a generic, fixed-size tuple type with safe access and mutation.
+`Tuple` provides a generic, fixed-size tuple type with safe access and mutation.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/tuple"
@@ -750,9 +747,9 @@ func main() {
 }
 ```
 
-The Tuple enforces a fixed length, but the values inside are still mutable. If you want total immutability, you’ll have to enforce that yourself (Go can’t save you here).
+The `Tuple` enforces a fixed length, but the values inside are still mutable. If you want total immutability, you’ll have to enforce that yourself (Go can’t save you here).
 
-The SyncTuple is the thread-safe version of Tuple. It wraps everything with a mutex, so you can safely `Get` and `Set` from multiple goroutines without worrying about races.
+The `SyncTuple` is the thread-safe version of `Tuple`. It wraps everything with a mutex, so you can safely `Get` and `Set` from multiple goroutines without worrying about races.
 
 ```go
 import "github.com/PsionicAlch/byteforge/datastructs/tuple"
@@ -787,7 +784,7 @@ func main() {
 }
 ```
 
-Unlike Set and SyncSet, there’s no “convert between” helper here, because a Tuple’s length is baked in. But you can always rebuild one from a slice if needed.
+Unlike `Set` and `SyncSet`, there’s no “convert between” helper here, because a `Tuple`’s length is baked in. But you can always rebuild one from a slice if needed.
 </details>
 
 ### Utility Functions
@@ -795,7 +792,7 @@ Unlike Set and SyncSet, there’s no “convert between” helper here, because 
 <details>
 <summary><strong>slices.ShallowEquals</strong></summary>
 
-Shallow Equals checks if two slices are equal to one another by checking if they have the same amount of elements and whether or not all the elements found in the first slice could also be found in the second slice. Shallow Equals does not care about the order of the elements. Both slices need to be of the same type.
+`ShallowEquals` checks if two slices are equal to one another by checking if they have the same amount of elements and whether or not all the elements found in the first slice could also be found in the second slice. `ShallowEquals` does not care about the order of the elements. Both slices need to be of the same type.
 
 ```go
 import (
@@ -824,7 +821,7 @@ func main() {
 <details>
 <summary><strong>slices.DeepEquals</strong></summary>
 
-Deep Equals is simply a wrapper around slices.Equal from the standard library. It's here for the sake of completeness. As such here is the description for slices.Equal from the standard library: `Equal reports whether two slices are equal: the same length and all elements equal. If the lengths are different, Equal returns false. Otherwise, the elements are compared in increasing index order, and the comparison stops at the first unequal pair. Empty and nil slices are considered equal. Floating point NaNs are not considered equal.`
+`DeepEquals` is simply a wrapper around `slices.Equal` from the standard library. It's here for the sake of completeness. As such here is the description for `slices.Equal` from the standard library: `Equal reports whether two slices are equal: the same length and all elements equal. If the lengths are different, Equal returns false. Otherwise, the elements are compared in increasing index order, and the comparison stops at the first unequal pair. Empty and nil slices are considered equal. Floating point NaNs are not considered equal.`
 
 ```go
 import (
@@ -853,7 +850,7 @@ func main() {
 <details>
 <summary><strong>slices.IRange</strong></summary>
 
-IRange creates a range from min to max. The range is inclusive. You can change the step size by passing a step, otherwise it will default to +/- 1 of the type you want your range slice to be. If min is greater than max then the function assumes you're counting backwards and so the step size would default to -1. If max is greater than min then the function will default to using a +1 as it's step size. If you provide a step size that would result in an infinite loop the function will return an empty slice.
+`IRange` creates a range from min to max. The range is inclusive. You can change the step size by passing a step, otherwise it will default to +/- 1 of the type you want your range slice to be. If min is greater than max then the function assumes you're counting backwards and so the step size would default to -1. If max is greater than min then the function will default to using a +1 as it's step size. If you provide a step size that would result in an infinite loop the function will return an empty slice.
 
 ```go
 import (
@@ -883,7 +880,7 @@ func main() {
 <details>
 <summary><strong>slices.ERange</strong></summary>
 
-ERange creates a range from min to max. The range is exclusive. You can change the step size by passing a step, otherwise it will default to +/- 1 of the type you want your range slice to be. If min is greater than max then the function assumes you're counting backwards and so the step size would default to -1. If max is greater than min then the function will default to using a +1 as it's step size. If you provide a step size that would result in an infinite loop the function will return an empty slice.
+`ERange` creates a range from min to max. The range is exclusive. You can change the step size by passing a step, otherwise it will default to +/- 1 of the type you want your range slice to be. If min is greater than max then the function assumes you're counting backwards and so the step size would default to -1. If max is greater than min then the function will default to using a +1 as it's step size. If you provide a step size that would result in an infinite loop the function will return an empty slice.
 
 ```go
 import (
@@ -913,7 +910,7 @@ func main() {
 <details id="slices-map">
 <summary><strong>slices.Map</strong></summary>
 
-Map applies the output of a given function to each element of the input slice returning a new slice containing the results.
+`Map` applies the output of a given function to each element of the input slice returning a new slice containing the results.
 
 ```go
 import (
@@ -951,7 +948,7 @@ func main() {
 <details>
 <summary><strong>slices.Filter</strong></summary>
 
-Filter returns a new slice containing only the elements of the input slice for which the predicate function returns true. The original order of elements is preserved. The output slice is a newly allocated slice of the same type as the input.
+`Filter` returns a new slice containing only the elements of the input slice for which the predicate function returns true. The original order of elements is preserved. The output slice is a newly allocated slice of the same type as the input.
 
 ```go
 import (
@@ -977,11 +974,11 @@ func main() {
 <details>
 <summary><strong>slices.ParallelMap</strong></summary>
 
-Parallel Map applies the function to each element of the input slice concurrently using a worker pool, and returns a new slice containing the results in the original order.
+`ParallelMap` applies the function to each element of the input slice concurrently using a worker pool, and returns a new slice containing the results in the original order.
 
 The number of concurrent workers can be controlled via the optional workers parameter. If omitted or set to a non-positive number, the number of logical CPUs (`runtime.GOMAXPROCS(0)`) is used by default.
 
-Keep in mind that there is an overhead cost involved in handling the worker pool. The benefit of Parallel Map only starts to show once the size of the slice is much larger.
+Keep in mind that there is an overhead cost involved in handling the worker pool. The benefit of `ParallelMap` only starts to show once the size of the slice is much larger.
 
 ```go
 import (
@@ -1016,7 +1013,7 @@ func main() {
 <details>
 <summary><strong>slices.ParallelFilter</strong></summary>
 
-Parallel Filter evaluates the predicate function `f` in parallel on each element of the input slice `s` and returns a new slice containing only those elements for which `f` returns true.
+`ParallelFilter` evaluates the predicate function `f` in parallel on each element of the input slice `s` and returns a new slice containing only those elements for which `f` returns true.
 
 The number of concurrent workers can be optionally specified via the `workers` variadic argument. If omitted, it defaults to `runtime.GOMAXPROCS(0)`.
 
