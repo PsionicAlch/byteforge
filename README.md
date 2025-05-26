@@ -586,7 +586,24 @@ func main() {
 <details>
 <summary><strong>slices.IRange</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+IRange creates a range from min to max. The range is inclusive. You can change the step size by passing a step, otherwise it will default to +/- 1 of the type you want your range slice to be. If min is greater than max then the function assumes you're counting backwards and so the step size would default to -1. If max is greater than min then the function will default to using a +1 as it's step size. If you provide a step size that would result in an infinite loop the function will return an empty slice.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s1 := slices.IRange(1, 10)
+    s2 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    if slices.DeepEquals(s1, s2) {
+        fmt.Println("Slices are equal")
+    }
+}
+```
 </details>
 
 <details>
