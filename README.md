@@ -714,7 +714,80 @@ func main() {
 <details>
 <summary><strong>Tuple</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Tuple provides a generic, fixed-size tuple type with safe access and mutation.
+
+```go
+import "github.com/PsionicAlch/byteforge/datastructs/tuple"
+
+func main() {
+    // Create a tuple from direct values.
+    tup := tuple.New(1, 2, 3)
+
+    // Or create one from a slice.
+    tup = tuple.FromSlice([]int{10, 20, 30})
+
+    // Check how many elements.
+    fmt.Println("Tuple length:", tup.Len())
+
+    // Safely get a value (no panics on bad index!).
+    val, ok := tup.Get(1)
+    if ok {
+        fmt.Println("Got value at index 1:", val)
+    }
+
+    // Update a value at an index.
+    success := tup.Set(2, 99)
+    if success {
+        fmt.Println("Updated index 2 to 99")
+    }
+
+    // Get the whole thing as a slice.
+    slice := tup.ToSlice()
+    fmt.Println("Tuple as slice:", slice)
+
+    // String representation.
+    fmt.Println("Tuple string:", tup.String())
+}
+```
+
+The Tuple enforces a fixed length, but the values inside are still mutable. If you want total immutability, you’ll have to enforce that yourself (Go can’t save you here).
+
+The SyncTuple is the thread-safe version of Tuple. It wraps everything with a mutex, so you can safely `Get` and `Set` from multiple goroutines without worrying about races.
+
+```go
+import "github.com/PsionicAlch/byteforge/datastructs/tuple"
+
+func main() {
+    // Create a thread-safe tuple.
+    syncTup := tuple.NewSync("a", "b", "c")
+
+    // Or from a slice.
+    syncTup = tuple.SyncFromSlice([]string{"x", "y", "z"})
+
+    // Get and set safely.
+    val, ok := syncTup.Get(0)
+    if ok {
+        fmt.Println("Got:", val)
+    }
+
+    success := syncTup.Set(1, "newY")
+    if success {
+        fmt.Println("Updated index 1 to 'newY'")
+    }
+
+    // Convert to slice.
+    slice := syncTup.ToSlice()
+    fmt.Println("SyncTuple as slice:", slice)
+
+    // String output.
+    fmt.Println("SyncTuple string:", syncTup.String())
+
+    // Length stays constant.
+    fmt.Println("SyncTuple length:", syncTup.Len())
+}
+```
+
+Unlike Set and SyncSet, there’s no “convert between” helper here, because a Tuple’s length is baked in. But you can always rebuild one from a slice if needed.
 </details>
 
 ### Utility Functions
