@@ -749,7 +749,33 @@ func main() {
 <details>
 <summary><strong>slices.ParallelFilter</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Parallel Filter evaluates the predicate function `f` in parallel on each element of the input slice `s` and returns a new slice containing only those elements for which `f` returns true.
+
+The number of concurrent workers can be optionally specified via the `workers` variadic argument. If omitted, it defaults to `runtime.GOMAXPROCS(0)`.
+
+The original order of elements is preserved. This function is particularly useful when the predicate function is expensive and you want to utilize multiple CPU cores.
+
+Keep in mind that even though filtering is performed in parallel, the result is assembled sequentially, making this function most beneficial when `f` is significantly more expensive than a simple condition.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s2 := slices.ParallelFilter(s1, func (i int) bool {
+        return i % 2 == 0
+    })
+    s3 := []int{2, 4, 6, 8, 10}
+
+    if slices.DeepEquals(s2, s3) {
+        fmt.Println("Slices are equal")
+    }
+}
+```
 </details>
 
 ---
