@@ -78,7 +78,109 @@ go get -u "github.com/PsionicAlch/byteforge@latest"
 
 Collection provides a fluent, chainable API for performing functional-style operations like map, filter, and reduce on slices.
 
-🚧 Documentation is currently under construction 🚧
+<details>
+<summary><strong>Collection</strong></summary>
+
+Collection is roughly based off Laravel's [Collections](https://laravel.com/docs/12.x/collections) package. It's not as feature rich, so feel free to make any feature requests or send a pull request if you want to get your hands dirty. 
+
+Honestly, I would **not** suggest using Collection in production yet.  
+Because of the current [lack of generics for methods](https://github.com/golang/go/issues/49085), I had to use a lot of `any` and `reflect`.  
+The code **looks pretty** when you chain a bunch of method calls together, and you can paint a really nice picture of how the data mutates over time —  
+but I'd recommend sticking with [byteforge/functions/slices](#slices-map) instead.
+
+You won't get the pretty chainability or the smooth data flow, and you'll need intermediate variables,  
+but you'll get **much better performance**, **full type safety** and **full IntelliSense support**.
+
+```go
+import (
+    "fmt"
+    "strconv"
+
+    "github.com/PsionicAlch/byteforge/collection"
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    // Step 1: Create a new collection.
+    // FromSlice takes your input slice and wraps it in a Collection.
+    // Internally, Collection stores data as 'any' because Go doesn't support
+    // generic methods yet, so this sacrifices some type safety for flexibility.
+    c := collection.FromSlice(s)
+
+    // Step 2: Map over all elements.
+    // Map takes a function that accepts one element (same type as the slice)
+    // and returns one transformed element — which can be a **different** type.
+    squared := c.Map(func(e int) int {
+        return e * e
+    })
+
+    // You can also change the type, e.g., convert numbers to strings:
+    asStrings := c.Map(func(e int) string {
+        return strconv.Itoa(e)
+    })
+
+    // Step 3: Filter elements.
+    // Filter takes a function that receives one element and returns a bool.
+    // If the function returns true, the element stays; if false, it’s excluded.
+    evens := c.Filter(func(e int) bool {
+        return e % 2 == 0
+    })
+
+    // Step 4: ForEach side-effects.
+    // ForEach lets you perform an action on each element **without** changing the 
+    // data. The function must accept one element and return nothing.
+    c.ForEach(func(e int) {
+        fmt.Printf("Value: %d\n", e)
+    })
+
+    // Step 5: Reduce to a single value.
+    // Reduce combines the elements into a single accumulated value.
+    sum, err := c.Reduce(func(acc, e int) int {
+        return acc + e
+    }, 0)
+
+    // If there were any issues with the functions you passed in the chain this
+    // error will tell you about it.
+    if err == nil {
+        fmt.Println("Sum:", sum)
+    }
+
+    // Step 6: Extract the final slice.
+    // ToSlice returns the processed slice as 'any' plus any accumulated error.
+    result, err := c.ToSlice()
+
+    // If there were any issues with the functions you passed in the chain this
+    // error will tell you about it.
+    if err == nil {
+        fmt.Printf("Final slice: %#v\n", result)
+    }
+
+    // Optional: Convert to a typed slice.
+    // Use the standalone generic function to cast safely.
+    typed, err := collection.ToTypedSlice[int, []int](c)
+
+    // If there were any issues with the functions you passed in the chain this
+    // error will tell you about it.
+    if err == nil {
+        fmt.Printf("Typed slice: %#v\n", typed)
+    }
+
+    collection.
+        FromSlice(slices.IRange(1, 100)).
+        Filter(func (i int) bool {
+            return i % 2 ==0
+        }).
+        Map(func (i int) string {
+            return strconv.Itoa(e)
+        }).
+        ForEach(func (s string) {
+            fmt.Printf("Value: %s\n", s)
+        })
+}
+```
+</details>
 
 ### Data Structures
 
@@ -447,7 +549,7 @@ func main() {
 🚧 Documentation is currently under construction 🚧
 </details>
 
-<details>
+<details id="slices-map">
 <summary><strong>slices.Map</strong></summary>
 
 🚧 Documentation is currently under construction 🚧
