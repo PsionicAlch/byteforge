@@ -8,6 +8,12 @@ Byteforge is a modular collection of handcrafted Go data structures, concurrency
 
 ## Features
 
+### Collection
+
+- [X] Map
+- [X] Filter
+- [X] Reduce
+
 ### Data Types
 
 - [X] Ring Buffer 
@@ -67,6 +73,12 @@ Install using ```go get```:
 ```bash
 go get -u "github.com/PsionicAlch/byteforge@latest"
 ```
+
+### Collection
+
+Collection provides a fluent, chainable API for performing functional-style operations like map, filter, and reduce on slices.
+
+🚧 Documentation is currently under construction 🚧
 
 ### Data Structures
 
