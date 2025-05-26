@@ -514,7 +514,201 @@ func main() {
 <details>
 <summary><strong>Set</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Set is a generic collection that stores unique elements — no duplicates allowed. It supports typical set operations like union, intersection, difference, and symmetric difference. Internally, it’s backed by Go’s native `map` type, providing fast lookups, inserts, and deletes.
+
+```go
+import "github.com/PsionicAlch/byteforge/datastructs/set"
+
+func main() {
+    // To create a new empty set, use New. You can optionally pass
+    // an initial capacity to optimize performance.
+    s := set.New[int]()
+
+    // Or, initialize a set from an existing slice.
+    s = set.FromSlice([]int{1, 2, 3, 4, 5})
+
+    // You can check if the set contains a particular element.
+    fmt.Printf("Contains 3? %t\n", s.Contains(3))
+
+    // Add elements using Push. Duplicate values are ignored.
+    s.Push(5, 6, 7)
+
+    // Remove and return an arbitrary element with Pop.
+    elem, ok := s.Pop()
+    if ok {
+        fmt.Printf("Popped element: %d\n", elem)
+    }
+
+    // Peek at an arbitrary element without removing it.
+    elem, ok = s.Peek()
+    if ok {
+        fmt.Printf("Peeked element: %d\n", elem)
+    }
+
+    // Check the number of elements.
+    fmt.Printf("Size of set: %d\n", s.Size())
+
+    // Check if the set is empty.
+    fmt.Printf("Is set empty? %t\n", s.IsEmpty())
+
+    // You can iterate over the set using Iter, which returns a 
+    // lazy iterator from the iter package.
+    for v := range s.Iter() {
+        fmt.Println("Item:", v)
+    }
+
+    // Remove a specific item.
+    removed := s.Remove(4)
+    fmt.Printf("Removed 4? %t\n", removed)
+
+    // Clear all items from the set.
+    s.Clear()
+
+    // Clone creates a deep copy of the set.
+    clone := s.Clone()
+
+    // Perform a union between two sets.
+    s1 := set.FromSlice([]int{1, 2, 3})
+    s2 := set.FromSlice([]int{3, 4, 5})
+    union := s1.Union(s2)
+    fmt.Println("Union result:", union.ToSlice())
+
+    // Find the intersection.
+    intersection := s1.Intersection(s2)
+    fmt.Println("Intersection result:", intersection.ToSlice())
+
+    // Find the difference (elements in s1 but not in s2).
+    difference := s1.Difference(s2)
+    fmt.Println("Difference result:", difference.ToSlice())
+
+    // Find the symmetric difference (elements in either but not both).
+    symDiff := s1.SymmetricDifference(s2)
+    fmt.Println("Symmetric difference result:", symDiff.ToSlice())
+
+    // Check subset relation.
+    isSubset := s1.IsSubsetOf(union)
+    fmt.Printf("s1 is subset of union? %t\n", isSubset)
+
+    // Check if two sets are equal.
+    isEqual := s1.Equals(clone)
+    fmt.Printf("s1 equals clone? %t\n", isEqual)
+
+    // Convert set to a slice.
+    slice := s1.ToSlice()
+    fmt.Println("Set as slice:", slice)
+}
+```
+
+SyncSet is the thread-safe sibling of Set. Under the hood, it wraps everything with a good ol’ `sync.RWMutex`, so you don’t have to think about race conditions or panic when you run `go test -race`.  
+
+Sure, it’s maybe not as hyper-optimized as an atomic-powered beast, but for most use cases, it’s **more than fast enough** and it’ll save you from those 2 a.m. debugging sessions.
+
+```go
+import "github.com/PsionicAlch/byteforge/datastructs/set"
+
+func main() {
+    // Create a new empty SyncSet. You can optionally pass in an
+    // initial capacity (which is more of a hint for performance).
+    ss := set.NewSync[int]()
+
+    // Or, build a SyncSet straight from a slice.
+    ss = set.SyncFromSlice([]int{10, 20, 30, 40, 50})
+
+    // Check if the set contains a value.
+    fmt.Printf("Contains 30? %t\n", ss.Contains(30))
+
+    // Add multiple items at once.
+    ss.Push(60, 70, 80)
+
+    // Remove and return an arbitrary item.
+    // Reminder: which element you get is random-ish because
+    // Go's map iteration order is random.
+    elem, ok := ss.Pop()
+    if ok {
+        fmt.Printf("Popped element: %d\n", elem)
+    }
+
+    // Peek at an item without removing it.
+    elem, ok = ss.Peek()
+    if ok {
+        fmt.Printf("Peeked element: %d\n", elem)
+    }
+
+    // Check the number of items.
+    fmt.Printf("Size of SyncSet: %d\n", ss.Size())
+
+    // Check if it's empty.
+    fmt.Printf("Is SyncSet empty? %t\n", ss.IsEmpty())
+
+    // Iterate over the set’s contents.
+    // This gives you a snapshot (not live-updated if someone
+    // else modifies the set during iteration).
+    ss.Iter()(func(v int) bool {
+        fmt.Println("Iterated item:", v)
+        return true // keep iterating
+    })
+
+    // Remove a specific item.
+    removed := ss.Remove(40)
+    fmt.Printf("Removed 40? %t\n", removed)
+
+    // Clear everything.
+    ss.Clear()
+
+    // Clone the SyncSet — creates a deep copy.
+    clone := ss.Clone()
+
+    // Combine two sets with Union.
+    ss1 := set.SyncFromSlice([]int{1, 2, 3})
+    ss2 := set.SyncFromSlice([]int{3, 4, 5})
+    union := ss1.Union(ss2)
+    fmt.Println("Union result:", union.ToSlice())
+
+    // Get intersection.
+    intersection := ss1.Intersection(ss2)
+    fmt.Println("Intersection result:", intersection.ToSlice())
+
+    // Find the difference (items in ss1 but not in ss2).
+    difference := ss1.Difference(ss2)
+    fmt.Println("Difference result:", difference.ToSlice())
+
+    // Find the symmetric difference.
+    symDiff := ss1.SymmetricDifference(ss2)
+    fmt.Println("Symmetric difference result:", symDiff.ToSlice())
+
+    // Check if ss1 is a subset of union.
+    isSubset := ss1.IsSubsetOf(union)
+    fmt.Printf("ss1 is subset of union? %t\n", isSubset)
+
+    // Check if two sets are equal.
+    isEqual := ss1.Equals(clone)
+    fmt.Printf("ss1 equals clone? %t\n", isEqual)
+
+    // Convert the SyncSet to a slice.
+    slice := ss1.ToSlice()
+    fmt.Println("SyncSet as slice:", slice)
+}
+```
+
+You can freely convert between `Set` and `SyncSet` using `FromSet` or `FromSyncSet`. Just keep in mind each conversion makes a *deep copy*, so it’s safe. But maybe don’t put it in your hot loop unless you like burning CPU cycles for fun.
+
+```go
+import (
+    "slices"
+
+    "github.com/PsionicAlch/byteforge/datastructs/set"
+)
+
+func main() {
+    s1 := set.FromSlice([]int{1, 2, 3, 4, 5, 6, 7, 8, 10})
+    
+    // You can convert a basic Set to a SyncSet by calling FromSet.
+    s2 := set.FromSet(s1)
+
+    // You can convert a Sync Set to a basic Set by calling FromSyncSet.
+    s3 := set.FromSyncSet(s2)
+}
+```
 </details>
 
 <details>
