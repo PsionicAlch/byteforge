@@ -528,7 +528,30 @@ func main() {
 <details>
 <summary><strong>slices.ShallowEquals</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Shallow Equals checks if two slices are equal to one another by checking if they have the same amount of elements and whether or not all the elements found in the first slice could also be found in the second slice. Shallow Equals does not care about the order of the elements. Both slices need to be of the same type.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s2 := []int{2, 3, 6, 5, 8, 9, 10, 1, 4, 7}
+
+    if slices.ShallowEquals(s1, s2) {
+        fmt.Println("Slices are equal")
+    }
+
+    s3 := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+    if !slices.ShallowEquals(s1, s3) {
+        fmt.Println("Slices are not equal")
+    }
+}
+```
 </details>
 
 <details>
@@ -572,6 +595,7 @@ func main() {
 
 🚧 Documentation is currently under construction 🚧
 </details>
+
 ---
 
 ## Contributing
