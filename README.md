@@ -640,6 +640,7 @@ func main() {
         fmt.Println("Slices are equal")
     }
 }
+```
 </details>
 
 <details id="slices-map">
@@ -650,9 +651,33 @@ Map applies the output of a given function to each element of the input slice re
 ```go
 import (
     "fmt"
+    "strconv"
 
-
+    "github.com/PsionicAlch/byteforge/functions/slices"
 )
+
+func main() {
+    s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s2 := slices.Map(s1, func (i int) int) {
+        return i * 2
+    }
+    s3 := []int{2, 4, 6, 8, 10, 12, 14, 16, 18, 20}
+
+    if slices.DeepEquals(s2, s3) {
+        fmt.Println("Slices are equal")
+    }
+
+    // The new slice can be of any type you want. You aren't limited to using the 
+    // same type as the input slice.
+    s4 := slices.Map(s1, func (i int) string {
+        return strconv.Itoa(i)
+    })
+    s5 := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
+
+    if slices.DeepEquals(s4, s5) {
+        fmt.Println("Slices are equal")
+    }
+}
 ```
 </details>
 
