@@ -633,7 +633,7 @@ func main() {
         fmt.Println("Slices are equal")
     }
 
-    s3 := slices.IRange(0, 10, 2)
+    s3 := slices.ERange(0, 10, 2)
     s4 := []int{0, 2, 4, 6, 8}
 
     if slices.DeepEquals(s1, s2) {
@@ -645,7 +645,15 @@ func main() {
 <details id="slices-map">
 <summary><strong>slices.Map</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Map applies the output of a given function to each element of the input slice returning a new slice containing the results.
+
+```go
+import (
+    "fmt"
+
+
+)
+```
 </details>
 
 <details>
