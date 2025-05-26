@@ -557,7 +557,30 @@ func main() {
 <details>
 <summary><strong>slices.DeepEquals</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Deep Equals is simply a wrapper around slices.Equal from the standard library. It's here for the sake of completeness. As such here is the description for slices.Equal from the standard library: `Equal reports whether two slices are equal: the same length and all elements equal. If the lengths are different, Equal returns false. Otherwise, the elements are compared in increasing index order, and the comparison stops at the first unequal pair. Empty and nil slices are considered equal. Floating point NaNs are not considered equal.`
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s2 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    if slices.ShallowEquals(s1, s2) {
+        fmt.Println("Slices are equal")
+    }
+
+    s3 := []int{2, 3, 6, 5, 8, 9, 10, 1, 4, 7}
+
+    if !slices.ShallowEquals(s1, s3) {
+        fmt.Println("Slices are not equal")
+    }
+}
+```
 </details>
 
 <details>
@@ -595,7 +618,6 @@ func main() {
 
 🚧 Documentation is currently under construction 🚧
 </details>
-
 
 ---
 
