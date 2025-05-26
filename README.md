@@ -626,8 +626,15 @@ import (
 )
 
 func main() {
-    s1 := slices.IRange(1, 10)
-    s2 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s1 := slices.ERange(1, 10)
+    s2 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+
+    if slices.DeepEquals(s1, s2) {
+        fmt.Println("Slices are equal")
+    }
+
+    s3 := slices.IRange(0, 10, 2)
+    s4 := []int{0, 2, 4, 6, 8}
 
     if slices.DeepEquals(s1, s2) {
         fmt.Println("Slices are equal")
