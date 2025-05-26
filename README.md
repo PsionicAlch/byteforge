@@ -173,7 +173,7 @@ func main() {
             return i % 2 ==0
         }).
         Map(func (i int) string {
-            return strconv.Itoa(e)
+            return strconv.Itoa(i)
         }).
         ForEach(func (s string) {
             fmt.Printf("Value: %s\n", s)
