@@ -684,7 +684,27 @@ func main() {
 <details>
 <summary><strong>slices.Filter</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Filter returns a new slice containing only the elements of the input slice for which the predicate function returns true. The original order of elements is preserved. The output slice is a newly allocated slice of the same type as the input.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s2 := slices.Filter(s1, func (i int) bool {
+        return i % 2 == 0
+    })
+    s3 := []int{2, 4, 6, 8, 10}
+
+    if slices.DeepEquals(s2, s3) {
+        fmt.Println("Slices are equal")
+    }
+}
+```
 </details>
 
 <details>
