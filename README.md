@@ -710,7 +710,40 @@ func main() {
 <details>
 <summary><strong>slices.ParallelMap</strong></summary>
 
-🚧 Documentation is currently under construction 🚧
+Parallel Map applies the function to each element of the input slice concurrently using a worker pool, and returns a new slice containing the results in the original order.
+
+The number of concurrent workers can be controlled via the optional workers parameter. If omitted or set to a non-positive number, the number of logical CPUs (`runtime.GOMAXPROCS(0)`) is used by default.
+
+Keep in mind that there is an overhead cost involved in handling the worker pool. The benefit of Parallel Map only starts to show once the size of the slice is much larger.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    s1 := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+    s2 := slices.ParallelMap(s1, func (i int) int) {
+        return i * 2
+    }
+    s3 := []int{2, 4, 6, 8, 10, 12, 14, 16, 18, 20}
+
+    if slices.DeepEquals(s2, s3) {
+        fmt.Println("Slices are equal")
+    }
+
+    // You can easily set the number of workers in the pool.
+    s4 := slices.ParallelMap(s1, func (i int) int {
+        return i * 2
+    }, 52)
+
+    if slices.DeepEquals(s4, s3) {
+        fmt.Println("Slices are equal")
+    }
+}
+```
 </details>
 
 <details>
