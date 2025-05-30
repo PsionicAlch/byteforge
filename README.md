@@ -988,7 +988,7 @@ import (
 func main() {
     slices.ForEach([]string{"a", "b", "c"}, func(i int, v string) {
 	    fmt.Printf("Index %d: %s\n", i, v)
-	})
+    })
 }
 ```
 </details>
@@ -1081,12 +1081,12 @@ import (
 
 func main() {
     slices.ParallelForEach([]int{1, 2, 3, 4}, func(i int, v int) {
-	    fmt.Printf("Index %d: %d\n", i, v)
-	})
+        fmt.Printf("Index %d: %d\n", i, v)
+    })
 
 	slices.ParallelForEach([]int{1, 2, 3, 4}, func(i int, v int) {
-	    fmt.Printf("Index %d: %d\n", i, v)
-	}, 52) // use 52 workers
+        fmt.Printf("Index %d: %d\n", i, v)
+    }, 52) // use 52 workers
 }
 ```
 </details>
