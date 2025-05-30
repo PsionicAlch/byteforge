@@ -1084,7 +1084,7 @@ func main() {
         fmt.Printf("Index %d: %d\n", i, v)
     })
 
-	slices.ParallelForEach([]int{1, 2, 3, 4}, func(i int, v int) {
+    slices.ParallelForEach([]int{1, 2, 3, 4}, func(i int, v int) {
         fmt.Printf("Index %d: %d\n", i, v)
     }, 52) // use 52 workers
 }
