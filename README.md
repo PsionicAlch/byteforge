@@ -34,14 +34,16 @@ Byteforge is a modular collection of handcrafted Go data structures, concurrency
 - [X] Exclusive Range (slices.ERange)
 - [X] Map (slices.Map)
 - [X] Filter (slices.Filter)
+- [X] For Each (slices.ForEach)
 - [ ] Reduce
-- [X] Parallel Map (slices.ParallelMap)
-- [X] Parallel Filter (slices.ParallelFilter)
-- [ ] Parallel Reduce
 - [ ] Partition
 - [ ] Chunk
 - [ ] Unique
 - [ ] Flatten
+- [X] Parallel Map (slices.ParallelMap)
+- [X] Parallel Filter (slices.ParallelFilter)
+- [X] Parallel For Each (slices.ParallelForEach)
+- [ ] Parallel Reduce
 
 #### Maps
 
@@ -972,6 +974,26 @@ func main() {
 </details>
 
 <details>
+<summary><strong>slices.ForEach</strong></summary>
+
+`ForEach` iterates over the elements of the provided slice, calling the provided function for each element with its index and value.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    slices.ForEach([]string{"a", "b", "c"}, func(i int, v string) {
+	    fmt.Printf("Index %d: %s\n", i, v)
+	})
+}
+```
+</details>
+
+<details>
 <summary><strong>slices.ParallelMap</strong></summary>
 
 `ParallelMap` applies the function to each element of the input slice concurrently using a worker pool, and returns a new slice containing the results in the original order.
@@ -1042,6 +1064,32 @@ func main() {
 ```
 </details>
 
+
+<details>
+<summary><strong>slices.ParallelForEach</strong></summary>
+
+`ParallelForEach` iterates over the elements of the provided slice in parallel, using multiple worker goroutines. It calls the provided function for each element with its index and value.
+
+The number of concurrent workers can be optionally specified via the `workers` variadic argument. If omitted, it defaults to `runtime.GOMAXPROCS(0)`.
+
+```go
+import (
+    "fmt"
+
+    "github.com/PsionicAlch/byteforge/functions/slices"
+)
+
+func main() {
+    slices.ParallelForEach([]int{1, 2, 3, 4}, func(i int, v int) {
+	    fmt.Printf("Index %d: %d\n", i, v)
+	})
+
+	slices.ParallelForEach([]int{1, 2, 3, 4}, func(i int, v int) {
+	    fmt.Printf("Index %d: %d\n", i, v)
+	}, 52) // use 52 workers
+}
+```
+</details>
 ---
 
 ## Contributing
